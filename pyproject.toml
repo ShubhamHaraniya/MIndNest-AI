@@ -36,7 +36,7 @@ dependencies = [
     # LangSmith records traces (masked). NeMo Guardrails and Ragas arrive with their own parts.
     "langchain-core>=1.0",
     "langgraph>=1.0",
-    "mcp>=1.30,<2",
+    "mcp>=1.30,<3",
     "langgraph-checkpoint-postgres>=3.0",
     "psycopg[binary,pool]>=3.2",
     "langchain-anthropic>=1.0",
