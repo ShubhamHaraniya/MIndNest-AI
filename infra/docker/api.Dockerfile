@@ -1,5 +1,5 @@
 # One image for the API, the Celery worker and the migration job.
-FROM python:3.12-slim
+FROM python:3.15-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

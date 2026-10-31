@@ -1,6 +1,6 @@
 # Embedding and rerank service on CPU, for the production stack's "models" profile.
 # (On a laptop with a GPU you run this service on the host instead; see the README.)
-FROM python:3.12-slim
+FROM python:3.15-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
