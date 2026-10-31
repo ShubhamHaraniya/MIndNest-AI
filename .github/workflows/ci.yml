@@ -35,7 +35,7 @@ jobs:
       DATABASE_URL: postgresql+asyncpg://mindnest_app:mindnest_app@localhost:5432/mindnest
       MIGRATION_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/mindnest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
