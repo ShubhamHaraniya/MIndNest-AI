@@ -57,7 +57,7 @@ models = [
 # of this. langchain-community is held below 0.4 because Ragas 0.4 cannot import it otherwise.
 eval = [
     "ragas>=0.4,<0.5",
-    "langchain-community>=0.3.31,<0.4",
+    "langchain-community>=0.3.31,<0.5",
     "openai>=2.45",
     "instructor>=1.17",
 ]
