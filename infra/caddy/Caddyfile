@@ -1,0 +1,36 @@
+# Caddy gets and renews the HTTPS certificate for $DOMAIN by itself (needs ports 80 and 443 open
+# and the domain's DNS pointing at this machine).
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	# Largest upload is 50 MB; leave room for the form wrapper.
+	request_body {
+		max_size 60MB
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	# Compress only the built assets. Chat answers stream token by token and must not be buffered.
+	@assets path /_next/static/*
+	encode @assets zstd gzip
+
+	reverse_proxy web:3000 {
+		# Send every chunk straight to the browser (streamed chat answers).
+		flush_interval -1
+		# (Caddy also replaces any X-Forwarded-For the visitor sent, so the API's per-address
+		# rate limits cannot be dodged by forging it.)
+		transport http {
+			response_header_timeout 180s
+		}
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

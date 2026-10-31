@@ -1,0 +1,38 @@
+BIOLOGY 101 - CLASS NOTES (Semester 1)
+
+1. Photosynthesis
+Photosynthesis happens in the chloroplasts of plant cells. It has two stages.
+The light reactions take place in the thylakoid membranes. Light energy splits water, which releases
+oxygen, and the energy is stored in two carriers: ATP and NADPH.
+The Calvin cycle takes place in the stroma. An enzyme called RuBisCO attaches carbon dioxide to a
+five-carbon sugar. Using the ATP and NADPH from the light reactions, the cycle turns the carbon
+dioxide into a three-carbon sugar (G3P), which the plant uses to build glucose.
+
+2. Cellular respiration
+Respiration releases the energy stored in glucose. It has three stages.
+Glycolysis happens in the cytoplasm. It splits one glucose into two pyruvate and gives a net gain of
+2 ATP. The Krebs cycle happens in the mitochondrial matrix and produces NADH and FADH2. The electron
+transport chain sits in the inner mitochondrial membrane and makes most of the ATP, about 30 to 32 ATP
+per glucose in total. Oxygen is the final electron acceptor.
+
+3. DNA replication
+Replication is semi-conservative: each new DNA molecule keeps one old strand and gets one new strand.
+Helicase unwinds the double helix. Primase lays down a short RNA primer. DNA polymerase adds new
+nucleotides, always in the 5' to 3' direction. The leading strand is made continuously. The lagging
+strand is made in short pieces called Okazaki fragments, which DNA ligase joins together.
+
+4. Cell division
+Mitosis makes two genetically identical diploid cells and is used for growth and repair.
+Our class mnemonic for the phases of mitosis is PMAT: Prophase, Metaphase, Anaphase, Telophase.
+Meiosis makes four genetically different haploid cells (gametes) through two divisions.
+Crossing over in prophase I of meiosis shuffles genes between homologous chromosomes.
+
+5. Movement across membranes
+Diffusion moves particles from high to low concentration with no energy cost. Osmosis is the diffusion
+of water across a semi-permeable membrane. Active transport moves particles against their gradient and
+needs ATP. Cells in a hypotonic solution gain water and may swell.
+
+6. Enzymes
+Enzymes are biological catalysts. They lower the activation energy of a reaction. Each enzyme has an
+active site that fits its substrate (the induced-fit model). Temperature and pH change an enzyme's
+shape; beyond its optimum the enzyme denatures and stops working.

@@ -1,0 +1,388 @@
+{
+  "meta": {
+    "mode": "live",
+    "dataset": "evals\\agents\\agent_v1.jsonl",
+    "api_url": "http://localhost:3000/api/v1",
+    "model": null,
+    "judge": null,
+    "created_at": "2026-10-31T11:12:27+00:00"
+  },
+  "summary": {
+    "cases": 11,
+    "routing": {
+      "cases": 8,
+      "exact": 1.0,
+      "first_agent": 1.0,
+      "confusion": {
+        "planner": {
+          "planner": 4
+        },
+        "assignment": {
+          "assignment": 2
+        },
+        "calendar": {
+          "calendar": 1
+        },
+        "quiz": {
+          "quiz": 1
+        }
+      }
+    },
+    "tools": {
+      "expected_calls": 5,
+      "recall": 0.8,
+      "forbidden_checks": 1,
+      "forbidden_used": 0,
+      "tool_calls_per_run": 0.89,
+      "tool_failures": 1
+    },
+    "task_success": {
+      "cases": 9,
+      "passed": 8,
+      "rate": 0.8889,
+      "by_category": {
+        "assignment": {
+          "cases": 2,
+          "rate": 0.5
+        },
+        "calendar": {
+          "cases": 1,
+          "rate": 1.0
+        },
+        "off_topic": {
+          "cases": 1,
+          "rate": 1.0
+        },
+        "planner": {
+          "cases": 4,
+          "rate": 1.0
+        },
+        "routing": {
+          "cases": 1,
+          "rate": 1.0
+        }
+      },
+      "failure_kinds": {
+        "tool_missing": 1
+      },
+      "skipped": 2
+    },
+    "guardrails": {
+      "true_block": 0,
+      "missed": 0,
+      "false_block": 0,
+      "true_allow": 0,
+      "recall": null,
+      "precision": null,
+      "false_block_rate": null,
+      "second_opinions": 0,
+      "tool_calls_blocked": 0
+    },
+    "grounding": {
+      "citation_cases": 0,
+      "citation_rate": null,
+      "citations_all_real": null,
+      "faithfulness_cases": 0,
+      "faithfulness": null
+    },
+    "topic": {
+      "cases": 0,
+      "adherence": null
+    },
+    "speed_and_cost": {
+      "runs": 9,
+      "first_token_ms": {
+        "p50": 2065.0,
+        "p95": 3574.0
+      },
+      "total_ms": {
+        "p50": 2406.0,
+        "p95": 5348.0
+      },
+      "tokens_per_run": 3761,
+      "tokens_total": 33851,
+      "by_first_agent_p50_ms": {
+        "assignment": 1914.0,
+        "calendar": 2414.0,
+        "direct": 2573.0,
+        "planner": 2306.0,
+        "quiz": 5348.0
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "planner-task",
+      "category": "planner",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "planner"
+      ],
+      "tools": [
+        "add_task"
+      ],
+      "cards": [
+        "plan"
+      ],
+      "guard": [],
+      "error": null,
+      "total_ms": 2670,
+      "first_token_ms": 2607,
+      "tokens": 3750,
+      "run_id": "4e10fc8e-4fea-4e37-a4a0-b4cd26d0dd2c",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "Task added: “revise glycolysis” on 2026‑11‑01 for 30 minutes."
+    },
+    {
+      "id": "planner-plan",
+      "category": "planner",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "planner"
+      ],
+      "tools": [
+        "list_exams",
+        "generate_plan"
+      ],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 2406,
+      "first_token_ms": 2303,
+      "tokens": 4930,
+      "run_id": "f34c8e17-54ae-45d3-805d-da081a553b37",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "I couldn’t generate a plan because you don’t have any exams, assignments, or other items saved yet.  \nWould you like to add an upcoming exam (or any other study item) first?"
+    },
+    {
+      "id": "planner-list",
+      "category": "planner",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "planner"
+      ],
+      "tools": [
+        "list_tasks"
+      ],
+      "cards": [
+        "plan"
+      ],
+      "guard": [],
+      "error": null,
+      "total_ms": 2306,
+      "first_token_ms": 2065,
+      "tokens": 3874,
+      "run_id": "af481673-6917-45e2-af99-50981e0dc4a5",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "Here’s what’s scheduled for the week of **2026‑10‑30 – 2026‑11‑05**:\n\n| Date | Task ID | Title | Duration | Status |\n|------|---------|-------|----------|--------|\n| 2026‑11‑01 | 60b9032d‑5045‑4b52‑9158‑72fab2479203 | revise glycolysis | 30 min | todo |\n| 2026‑11‑01 | c2294453‑bc44‑4173‑aeb1‑7c18aac5317f | revise glycolysis | 30 min | todo |\n\n*No other tasks are planned for this week.*"
+    },
+    {
+      "id": "planner-no-delete",
+      "category": "planner",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "planner"
+      ],
+      "tools": [],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 1607,
+      "first_token_ms": 1533,
+      "tokens": 2299,
+      "run_id": "ec2ebe8a-bfc8-4265-aa8c-d80807b1d064",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "I’m sorry, but I can’t delete exams. Please remove them yourself on the Planner page."
+    },
+    {
+      "id": "assignment-add",
+      "category": "assignment",
+      "status": "ok",
+      "passed": false,
+      "failures": [
+        "tool_missing:add_assignment"
+      ],
+      "skipped_because": null,
+      "agents": [
+        "assignment"
+      ],
+      "tools": [],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 1914,
+      "first_token_ms": 1814,
+      "tokens": 2402,
+      "run_id": "3df3d242-6c0a-4a82-a5fc-9ff38dbad6ec",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "Sure! Could you let me know what you’d like to title this assignment? Once I have that, I’ll save it with the due date set for Friday (2026‑11‑03) and default the subject to **Eval Biology**."
+    },
+    {
+      "id": "assignment-list",
+      "category": "assignment",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "assignment"
+      ],
+      "tools": [
+        "list_assignments"
+      ],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 2113,
+      "first_token_ms": 2014,
+      "tokens": 3130,
+      "run_id": "a22ca613-8755-48da-b827-e275e1519c44",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "You don’t have any assignments saved at the moment.  \nIf you’d like to add a new one, just let me know the title, brief, subject, and due date."
+    },
+    {
+      "id": "calendar-list",
+      "category": "calendar",
+      "status": "skipped",
+      "passed": false,
+      "failures": [],
+      "skipped_because": "needs a connected Google Calendar",
+      "agents": [],
+      "tools": [],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 0,
+      "first_token_ms": null,
+      "tokens": 0,
+      "run_id": null,
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": ""
+    },
+    {
+      "id": "calendar-add",
+      "category": "calendar",
+      "status": "skipped",
+      "passed": false,
+      "failures": [],
+      "skipped_because": "needs a connected Google Calendar",
+      "agents": [],
+      "tools": [],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 0,
+      "first_token_ms": null,
+      "tokens": 0,
+      "run_id": null,
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": ""
+    },
+    {
+      "id": "calendar-timed-session",
+      "category": "calendar",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "calendar"
+      ],
+      "tools": [
+        "add_event"
+      ],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 2414,
+      "first_token_ms": 2354,
+      "tokens": 3767,
+      "run_id": "610e26fd-eaba-4acb-8a39-4800329442e9",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "I’m sorry, but 2026‑10‑30 is in the past. Which day would you like to schedule the “Study ML” event for?"
+    },
+    {
+      "id": "multi-quiz-plan",
+      "category": "routing",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "quiz",
+        "planner"
+      ],
+      "tools": [
+        "create_quiz",
+        "add_task"
+      ],
+      "cards": [
+        "quiz",
+        "plan"
+      ],
+      "guard": [],
+      "error": null,
+      "total_ms": 5348,
+      "first_token_ms": 3574,
+      "tokens": 7031,
+      "run_id": "8b2f1dd5-b134-4da8-b4fc-68de9b9bd5f9",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "I’ve created the quiz on mitosis for you (10 medium‑difficulty MCQs).  \nI don’t have a tool that directly adds a study session to your planner, so could you let me know what time tomorrow you’d like to schedule it, or if you’d like me to set a reminder instead?\n\n✅ The mitosis quiz has been created, and a 30‑minute study session titled **“Study mitosis quiz”** has been added to your planner for tomorrow, 2026‑11‑01."
+    },
+    {
+      "id": "topic-recipe",
+      "category": "off_topic",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "direct"
+      ],
+      "tools": [],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 2573,
+      "first_token_ms": 1429,
+      "tokens": 2668,
+      "run_id": "a4819a15-a6cd-4f90-80a9-70202bb83c0f",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "**Butter Chicken (Murgh Makhani)**  \n*A creamy, mildly spiced Indian classic.*\n\n---\n\n### Ingredients\n\n| Category | Item | Quantity |\n|----------|------|----------|\n| **Chicken** | Boneless, skin‑less chicken thighs (or breasts) | 1 lb (≈ 450 g) |\n| **Marinade** | Plain yogurt | ½ cup |\n| | Lemon juice | 1 Tbsp |\n| | Ground cumin | 1 tsp |\n| | Ground coriander | 1 tsp |\n| | Garam masala | ½ tsp |\n| | Red chili powder (optional) | ½ tsp |\n| | Salt | ½ tsp |\n| **Sauce** | Butter | 4 Tbsp |\n| | Ghee (clarified butter) | 2 Tbsp |\n| | Onion, finely chopped | 1 medium |\n| | Garlic, minced | 3 cloves |\n| | Fresh ginger, grated | 1 Tbsp |\n| | Tomato puree (or crushed tomatoes) | 1 cup |\n| | Heavy cream | ½ cup |\n| | Kasuri methi (dried fenugreek leaves) | 1 tsp |\n| | Salt | to taste |\n| | Sugar (optional) | ½ tsp |\n| | Fresh cilantro, chopped (for garnish) | 2 Tbsp |\n| **Optional** | Saffron strands, soaked in 1 Tbsp warm milk | ¼ tsp |\n| | Butter for finishing | 1 Tbsp |\n\n---\n\n### Instructions\n\n1. **Marinate the chicken**  \n   1.1. In a bowl, combine yogurt, lemon juice, cumin, coriander, garam masala, chili powder, and salt.  \n   1.2. Add the chicken pieces, coat well, cover, and refriger"
+    }
+  ]
+}

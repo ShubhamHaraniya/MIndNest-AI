@@ -1,0 +1,209 @@
+{
+  "meta": {
+    "mode": "live",
+    "dataset": "evals\\agents\\agent_v1.jsonl",
+    "api_url": "http://localhost:3000/api/v1",
+    "model": null,
+    "judge": null,
+    "created_at": "2026-10-28T23:21:53+00:00"
+  },
+  "summary": {
+    "cases": 5,
+    "routing": {
+      "cases": 5,
+      "exact": 1.0,
+      "first_agent": 1.0,
+      "confusion": {
+        "study": {
+          "study": 5
+        }
+      }
+    },
+    "tools": {
+      "expected_calls": 2,
+      "recall": 1.0,
+      "forbidden_checks": 0,
+      "forbidden_used": 0,
+      "tool_calls_per_run": 1.0,
+      "tool_failures": 0
+    },
+    "task_success": {
+      "cases": 5,
+      "passed": 5,
+      "rate": 1.0,
+      "by_category": {
+        "study": {
+          "cases": 5,
+          "rate": 1.0
+        }
+      },
+      "failure_kinds": {},
+      "skipped": 0
+    },
+    "guardrails": {
+      "true_block": 0,
+      "missed": 0,
+      "false_block": 0,
+      "true_allow": 0,
+      "recall": null,
+      "precision": null,
+      "false_block_rate": null,
+      "second_opinions": 0,
+      "tool_calls_blocked": 0
+    },
+    "grounding": {
+      "citation_cases": 5,
+      "citation_rate": 1.0,
+      "citations_all_real": 1.0,
+      "faithfulness_cases": 0,
+      "faithfulness": null
+    },
+    "topic": {
+      "cases": 0,
+      "adherence": null
+    },
+    "speed_and_cost": {
+      "runs": 5,
+      "first_token_ms": {
+        "p50": 2427.0,
+        "p95": 13288.0
+      },
+      "total_ms": {
+        "p50": 2713.0,
+        "p95": 13711.0
+      },
+      "tokens_per_run": 3039,
+      "tokens_total": 15197,
+      "by_first_agent_p50_ms": {
+        "study": 2713.0
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "study-calvin",
+      "category": "study",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "study"
+      ],
+      "tools": [
+        "search_materials"
+      ],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 2713,
+      "first_token_ms": 2427,
+      "tokens": 3060,
+      "run_id": "e5d7e9ea-97f2-4b9e-a544-014efd23ebc8",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "The Calvin cycle fixes carbon dioxide by enzymatically attaching it to a five‑carbon sugar called ribulose‑1,5‑bisphosphate (RuBP).  \nRuBisCO catalyzes the reaction that produces a short‑lived six‑carbon intermediate, which immediately splits into two molecules of the three‑carbon sugar 3‑phosphoglycerate (G3P). The G3P can then be used to synthesize glucose and other carbohydrates. This process requires ATP and NADPH produced in the light reactions of photosynthesis.  \n\n> *“An enzyme called RuBisCO attaches carbon dioxide to a five‑carbon sugar. Using the ATP and NADPH from the light reactions, the cycle turns the carbon dioxide into a three‑carbon sugar (G3P), which the plant uses to build glucose.”* [1]"
+    },
+    {
+      "id": "study-glycolysis",
+      "category": "study",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "study"
+      ],
+      "tools": [
+        "search_materials"
+      ],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 2245,
+      "first_token_ms": 2131,
+      "tokens": 2959,
+      "run_id": "b73b17ed-b5e6-4392-881d-f163938a8eef",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "Glycolysis takes place in the **cytoplasm** of the cell and yields a **net gain of 2 ATP** per glucose molecule.  \n[1]"
+    },
+    {
+      "id": "study-mnemonic",
+      "category": "study",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "study"
+      ],
+      "tools": [
+        "search_materials"
+      ],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 2211,
+      "first_token_ms": 2144,
+      "tokens": 2875,
+      "run_id": "638f2f1b-a6f6-4621-a51b-43ba093f9106",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "The class mnemonic for the phases of mitosis is **PMAT**:  \n- **P**rophase  \n- **M**etaphase  \n- **A**naphase  \n- **T**elophase  \n\n[1]"
+    },
+    {
+      "id": "study-okazaki",
+      "category": "study",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "study"
+      ],
+      "tools": [
+        "search_materials"
+      ],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 2981,
+      "first_token_ms": 2669,
+      "tokens": 3187,
+      "run_id": "caabbb70-60b6-47d7-9ff2-cd600d33eb32",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "DNA replication treats the lagging strand differently from the leading strand because the two strands run in opposite directions.  \n- The helicase unwinds the double helix, creating a replication fork.  \n- Primase places short RNA primers on the lagging‑strand template at regular intervals.  \n- DNA polymerase III (or the equivalent polymerase) can only add nucleotides in the 5′→3′ direction, so it starts at each primer and synthesizes a short segment called an **Okazaki fragment**.  \n- When a fragment is finished, another primer is laid down further downstream, and the process repeats, producing a series of fragments that run 3′→5′ relative to the template.  \n- Finally, DNA ligase seals the nicks between adjacent Okazaki fragments, forming a continuous strand.  \n\nThis coordinated action allows the lagging strand to be replicated in the opposite direction of the replication fork while still producing a complete, continuous DNA molecule.  \n[1][2]"
+    },
+    {
+      "id": "study-meiosis",
+      "category": "study",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "study"
+      ],
+      "tools": [
+        "search_materials"
+      ],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 13711,
+      "first_token_ms": 13288,
+      "tokens": 3116,
+      "run_id": "1492e580-39d3-4cf6-b165-8719a88c45d7",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "**Mitosis vs. Meiosis**\n\n| Feature | Mitosis | Meiosis |\n|---------|---------|---------|\n| **Purpose** | Growth, repair, asexual reproduction | Production of gametes (sexual reproduction) |\n| **Number of divisions** | One division (prophase → metaphase → anaphase → telophase) | Two successive divisions (Meiosis I and Meiosis II) |\n| **Chromosome number** | Diploid (2n) → diploid (2n) | Diploid (2n) → haploid (n) |\n| **Genetic outcome** | Two genetically identical daughter cells | Four genetically different haploid cells |\n| **Cross‑over** | No crossing‑over | Crossing‑over occurs in prophase I, shuffling genes between homologous chromosomes |\n| **Cell type produced** | Somatic cells | Gametes (sperm or egg) |\n\nThese points are taken from the class notes: mitosis produces two identical diploid cells, while meiosis produces four genetically distinct haploid cells through two divisions and includes crossing‑over in prophase I. [1]"
+    }
+  ]
+}

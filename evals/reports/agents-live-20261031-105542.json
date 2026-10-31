@@ -1,0 +1,391 @@
+{
+  "meta": {
+    "mode": "live",
+    "dataset": "evals\\agents\\agent_v1.jsonl",
+    "api_url": "http://localhost:3000/api/v1",
+    "model": null,
+    "judge": null,
+    "created_at": "2026-10-31T10:55:42+00:00"
+  },
+  "summary": {
+    "cases": 11,
+    "routing": {
+      "cases": 11,
+      "exact": 1.0,
+      "first_agent": 1.0,
+      "confusion": {
+        "direct": {
+          "direct": 4
+        },
+        "quiz": {
+          "quiz": 4
+        },
+        "materials": {
+          "materials": 2
+        },
+        "planner": {
+          "planner": 1
+        }
+      }
+    },
+    "tools": {
+      "expected_calls": 6,
+      "recall": 0.8333,
+      "forbidden_checks": 2,
+      "forbidden_used": 0,
+      "tool_calls_per_run": 0.64,
+      "tool_failures": 1
+    },
+    "task_success": {
+      "cases": 11,
+      "passed": 9,
+      "rate": 0.8182,
+      "by_category": {
+        "direct": {
+          "cases": 4,
+          "rate": 1.0
+        },
+        "materials": {
+          "cases": 2,
+          "rate": 0.5
+        },
+        "planner": {
+          "cases": 1,
+          "rate": 1.0
+        },
+        "quiz": {
+          "cases": 4,
+          "rate": 0.75
+        }
+      },
+      "failure_kinds": {
+        "tool_missing": 1,
+        "answer_lacks_any": 1
+      },
+      "skipped": 0
+    },
+    "guardrails": {
+      "true_block": 0,
+      "missed": 0,
+      "false_block": 0,
+      "true_allow": 4,
+      "recall": null,
+      "precision": null,
+      "false_block_rate": 0.0,
+      "second_opinions": 0,
+      "tool_calls_blocked": 0
+    },
+    "grounding": {
+      "citation_cases": 0,
+      "citation_rate": null,
+      "citations_all_real": null,
+      "faithfulness_cases": 0,
+      "faithfulness": null
+    },
+    "topic": {
+      "cases": 0,
+      "adherence": null
+    },
+    "speed_and_cost": {
+      "runs": 11,
+      "first_token_ms": {
+        "p50": 2614.0,
+        "p95": 12180.0
+      },
+      "total_ms": {
+        "p50": 2832.0,
+        "p95": 29528.0
+      },
+      "tokens_per_run": 2605,
+      "tokens_total": 28659,
+      "by_first_agent_p50_ms": {
+        "direct": 1755.0,
+        "materials": 3304.0,
+        "planner": 2832.0,
+        "quiz": 2858.0
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "direct-hi",
+      "category": "direct",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "direct"
+      ],
+      "tools": [],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 977,
+      "first_token_ms": 873,
+      "tokens": 738,
+      "run_id": "ce482ede-a70c-48d7-9054-e78c4f030e23",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "Hey there! How can I help you today?"
+    },
+    {
+      "id": "direct-thanks",
+      "category": "direct",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "direct"
+      ],
+      "tools": [],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 1755,
+      "first_token_ms": 1665,
+      "tokens": 1743,
+      "run_id": "be0c0e37-189a-40bb-9ae8-d398d4d1fe4a",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "You're welcome! If you need anything else, just let me know."
+    },
+    {
+      "id": "direct-capabilities",
+      "category": "direct",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "direct"
+      ],
+      "tools": [],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 2028,
+      "first_token_ms": 1616,
+      "tokens": 2017,
+      "run_id": "5c1b92f5-5226-4beb-bfe6-8fd92c33baf0",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "Hey there! I’m here to help you stay organized, study smarter, and keep track of everything you need for school.  \nHere’s a quick rundown of what I can do:\n\n| Helper | What it does |\n|--------|--------------|\n| **assignment agent** | Keeps track of your assignments, drafts, and gives you coaching (breakdowns, outlines, feedback) – but it never writes the assignment for you. |\n| **calendar agent** | Manages your Google Calendar: add, move, or delete events (you’ll approve each change). |\n| **materials agent** | Lists, opens, reads, and summarizes any files you’ve uploaded (e.g., lecture notes, PDFs). |\n| **planner agent** | Saves exams, adds study tasks, reschedules them, marks tasks done, and shows your study plan. |\n| **quiz agent** | Creates quizzes, MCQs, and practice questions from your notes or general knowledge, and tracks results. |\n| **study agent** | Answers any course‑content questions using your own uploaded materials, with citations. |\n\nJust let me know what you need help with, and I’ll point you to the right helper!"
+    },
+    {
+      "id": "direct-hindi",
+      "category": "direct",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "direct"
+      ],
+      "tools": [],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 2527,
+      "first_token_ms": 844,
+      "tokens": 808,
+      "run_id": "6b3858fa-60e7-4a27-8e80-314837f3922a",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "Hello! How can I help you today?"
+    },
+    {
+      "id": "quiz-make",
+      "category": "quiz",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "quiz"
+      ],
+      "tools": [
+        "create_quiz"
+      ],
+      "cards": [
+        "quiz"
+      ],
+      "guard": [],
+      "error": null,
+      "total_ms": 3077,
+      "first_token_ms": 2906,
+      "tokens": 3427,
+      "run_id": "12265de3-1bac-4125-861e-3e38e1fcd63f",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "I’ve created a 5‑question quiz on photosynthesis for you, based on general knowledge (your notes don’t cover this topic). A card with a **Start** button is ready for you to begin."
+    },
+    {
+      "id": "quiz-mitosis",
+      "category": "quiz",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "quiz"
+      ],
+      "tools": [
+        "create_quiz"
+      ],
+      "cards": [
+        "quiz"
+      ],
+      "guard": [],
+      "error": null,
+      "total_ms": 3378,
+      "first_token_ms": 3263,
+      "tokens": 3444,
+      "run_id": "583ddf5b-822c-41dd-9ee3-292ab2c8bd48",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "I’ve created a 10‑question quiz on **mitosis and meiosis** for you.  \nIt’s based on general knowledge, not your notes.  \nA card with a **Start** button is ready for you to begin."
+    },
+    {
+      "id": "quiz-list",
+      "category": "quiz",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "quiz"
+      ],
+      "tools": [
+        "list_quizzes"
+      ],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 2858,
+      "first_token_ms": 2614,
+      "tokens": 3475,
+      "run_id": "7a95c8b2-fed5-4218-abcf-ca0b715c053b",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "Here are the quizzes you’ve created:\n\n| Quiz ID | Title | Subject | Status | # Questions |\n|---------|-------|---------|--------|-------------|\n| 627188d0-f371-4071-993e-64ea98ac3634 | mitosis and meiosis | Eval Biology | ready | 10 |\n| e245a358-d277-43b2-ab94-87185d5528cc | photosynthesis | Eval Biology | ready | 5 |\n\nLet me know if you’d like to start any of them or need more details!"
+    },
+    {
+      "id": "quiz-revise",
+      "category": "quiz",
+      "status": "ok",
+      "passed": false,
+      "failures": [
+        "tool_missing:start_revision"
+      ],
+      "skipped_because": null,
+      "agents": [
+        "quiz"
+      ],
+      "tools": [],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 2014,
+      "first_token_ms": 1930,
+      "tokens": 2332,
+      "run_id": "cd76ab07-282a-427b-be30-27230e97cab0",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "Which subject’s flashcards would you like to revise?"
+    },
+    {
+      "id": "materials-list",
+      "category": "materials",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "materials"
+      ],
+      "tools": [
+        "list_materials"
+      ],
+      "cards": [
+        "materials"
+      ],
+      "guard": [],
+      "error": null,
+      "total_ms": 29528,
+      "first_token_ms": 12180,
+      "tokens": 2833,
+      "run_id": "f98ade23-d23b-4e87-a34d-de4e5f30ebd5",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "Here are the files you’ve uploaded (unique names):\n\n| File name      | Subject      | Status | Parts |\n|----------------|--------------|--------|-------|\n| lab_manual.txt | Eval Biology | ready  | 2 parts |\n| biology_notes.txt | Eval Biology | ready  | 5 parts |\n\n(Each file appears twice in the system with different IDs, but they refer to the same content.)"
+    },
+    {
+      "id": "materials-summary",
+      "category": "materials",
+      "status": "ok",
+      "passed": false,
+      "failures": [
+        "answer_lacks_any"
+      ],
+      "skipped_because": null,
+      "agents": [
+        "materials"
+      ],
+      "tools": [
+        "list_materials",
+        "read_material"
+      ],
+      "cards": [
+        "materials"
+      ],
+      "guard": [],
+      "error": null,
+      "total_ms": 3304,
+      "first_token_ms": 3055,
+      "tokens": 4067,
+      "run_id": "382577f8-c22e-4463-9787-216a15d21dd8",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "I see two files named **biology_notes.txt** in your uploads.  \nCould you let me know which one you’d like me to open?  \n(You can reply with the file’s ID: `2284148f-3f32-45ab-a562-23c356ef53d0` or `643532e7-1543-436f-8ed7-12bcda2e5a18`.)"
+    },
+    {
+      "id": "planner-exam",
+      "category": "planner",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "planner"
+      ],
+      "tools": [
+        "add_exam"
+      ],
+      "cards": [
+        "exam"
+      ],
+      "guard": [],
+      "error": null,
+      "total_ms": 2832,
+      "first_token_ms": 2706,
+      "tokens": 3775,
+      "run_id": "81d82180-9525-44ac-a7f0-a83e2beb7985",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "Exam added: **Biology midterm** on 2026‑11‑21 (21 days left)."
+    }
+  ]
+}

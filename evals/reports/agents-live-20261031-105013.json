@@ -1,0 +1,368 @@
+{
+  "meta": {
+    "mode": "live",
+    "dataset": "evals\\agents\\agent_v1.jsonl",
+    "api_url": "http://localhost:3000/api/v1",
+    "model": null,
+    "judge": null,
+    "created_at": "2026-10-31T10:50:13+00:00"
+  },
+  "summary": {
+    "cases": 11,
+    "routing": {
+      "cases": 11,
+      "exact": 1.0,
+      "first_agent": 1.0,
+      "confusion": {
+        "study": {
+          "study": 11
+        }
+      }
+    },
+    "tools": {
+      "expected_calls": 2,
+      "recall": 1.0,
+      "forbidden_checks": 0,
+      "forbidden_used": 0,
+      "tool_calls_per_run": 1.18,
+      "tool_failures": 0
+    },
+    "task_success": {
+      "cases": 11,
+      "passed": 9,
+      "rate": 0.8182,
+      "by_category": {
+        "study": {
+          "cases": 11,
+          "rate": 0.8182
+        }
+      },
+      "failure_kinds": {
+        "no_citation": 1,
+        "answer_lacks_any": 1
+      },
+      "skipped": 0
+    },
+    "guardrails": {
+      "true_block": 0,
+      "missed": 0,
+      "false_block": 0,
+      "true_allow": 0,
+      "recall": null,
+      "precision": null,
+      "false_block_rate": null,
+      "second_opinions": 0,
+      "tool_calls_blocked": 0
+    },
+    "grounding": {
+      "citation_cases": 5,
+      "citation_rate": 0.8,
+      "citations_all_real": 0.8,
+      "faithfulness_cases": 0,
+      "faithfulness": null
+    },
+    "topic": {
+      "cases": 0,
+      "adherence": null
+    },
+    "speed_and_cost": {
+      "runs": 11,
+      "first_token_ms": {
+        "p50": 10508.0,
+        "p95": 28573.0
+      },
+      "total_ms": {
+        "p50": 10624.0,
+        "p95": 28671.0
+      },
+      "tokens_per_run": 4153,
+      "tokens_total": 45687,
+      "by_first_agent_p50_ms": {
+        "study": 10624.0
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "study-calvin",
+      "category": "study",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "study"
+      ],
+      "tools": [
+        "search_materials",
+        "search_materials"
+      ],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 3990,
+      "first_token_ms": 3702,
+      "tokens": 6824,
+      "run_id": "f33f336d-c8ae-4a9e-b4e6-c6063b20d958",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "The Calvin cycle fixes carbon dioxide by attaching it to a five‑carbon sugar (ribulose‑1,5‑bisphosphate, RuBP) through the action of the enzyme RuBisCO. This carboxylation reaction produces an unstable six‑carbon intermediate that immediately splits into two molecules of 3‑phosphoglycerate (G3P). The G3P molecules can then be used to synthesize glucose and other carbohydrates, while RuBP is regenerated to continue the cycle. The energy and reducing power for these steps come from ATP and NADPH produced in the light reactions of photosynthesis.  \n\n> *“An enzyme called RuBisCO attaches carbon dioxide to a five‑carbon sugar. Using the ATP and NADPH from the light reactions, the cycle turns the carbon dioxide into a three‑carbon sugar (G3P), which the plant uses to build glucose.”* [1]"
+    },
+    {
+      "id": "study-glycolysis",
+      "category": "study",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "study"
+      ],
+      "tools": [
+        "search_materials",
+        "search_materials"
+      ],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 28671,
+      "first_token_ms": 28573,
+      "tokens": 6615,
+      "run_id": "861e550c-f244-4ffe-9b4d-440bf9346503",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "Glycolysis takes place in the cytoplasm of the cell and yields a net gain of **2 ATP** per glucose molecule.  \n[1]"
+    },
+    {
+      "id": "study-mnemonic",
+      "category": "study",
+      "status": "ok",
+      "passed": false,
+      "failures": [
+        "no_citation"
+      ],
+      "skipped_because": null,
+      "agents": [
+        "study"
+      ],
+      "tools": [
+        "search_materials"
+      ],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 1722,
+      "first_token_ms": 1570,
+      "tokens": 3360,
+      "run_id": "c1a397ad-63ae-482a-8652-4bdd6f4b585c",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "The class mnemonic for the phases of mitosis is **PMAT**:  \n- **P**rophase  \n- **M**etaphase  \n- **A**naphase  \n- **T**elophase【1】"
+    },
+    {
+      "id": "study-okazaki",
+      "category": "study",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "study"
+      ],
+      "tools": [
+        "search_materials"
+      ],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 2669,
+      "first_token_ms": 2324,
+      "tokens": 3655,
+      "run_id": "f8703f70-82a9-4e2d-99e7-336b221357be",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "DNA replication treats the lagging strand as a series of short, discontinuous pieces rather than a single continuous strand.  \n1. **Unwinding and primer placement** – Helicase unwinds the double helix, and primase lays down short RNA primers on the lagging‑strand template.  \n2. **Fragment synthesis** – DNA polymerase adds nucleotides in the 5′→3′ direction, but because the template runs 3′→5′ relative to the replication fork, it must start each new segment at a primer and synthesize a short segment called an **Okazaki fragment**.  \n3. **Joining fragments** – Once a fragment is complete, DNA ligase seals the nicks between adjacent Okazaki fragments, producing a continuous strand.  \n\nThus, the lagging strand is built in a “back‑to‑front” fashion, with multiple primers, short fragments, and ligase‑mediated joining.  \n[1][2]"
+    },
+    {
+      "id": "study-meiosis",
+      "category": "study",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "study"
+      ],
+      "tools": [
+        "search_materials"
+      ],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 2549,
+      "first_token_ms": 2285,
+      "tokens": 3633,
+      "run_id": "3f48a433-8994-4ad1-9835-967e4f82fc7f",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "**Mitosis vs. Meiosis**\n\n| Feature | Mitosis | Meiosis |\n|---------|---------|---------|\n| **Purpose** | Growth, repair, asexual reproduction | Production of gametes (sexual reproduction) |\n| **Number of divisions** | One cell division (one round of mitotic phases) | Two successive divisions (Meiosis I & Meiosis II) |\n| **Ploidy of daughter cells** | Diploid (same chromosome number as parent) | Haploid (half the chromosome number of the parent) |\n| **Genetic identity** | Daughter cells are genetically identical to each other and to the parent | Daughter cells are genetically distinct due to recombination and independent assortment |\n| **Cross‑over / recombination** | None | Occurs during prophase I, shuffling genes between homologous chromosomes |\n| **Chromosome number change** | No change | Halves the chromosome number (from diploid to haploid) |\n\nThese points summarize the main differences between the two processes.  \n[1][3]"
+    },
+    {
+      "id": "study-enzymes",
+      "category": "study",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "study"
+      ],
+      "tools": [
+        "search_materials"
+      ],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 16686,
+      "first_token_ms": 16475,
+      "tokens": 3513,
+      "run_id": "cd908973-62c0-473f-b8b4-825d03ba8c2a",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "Enzymes have a specific three‑dimensional shape that allows their active site to fit the substrate. When the temperature rises above the enzyme’s optimum, the increased kinetic energy disrupts the weak bonds (hydrogen bonds, van der Waals forces, etc.) that maintain that shape. The protein unfolds or “denatures,” so the active site no longer matches the substrate and the enzyme can no longer catalyze the reaction. Thus, at high temperatures the enzyme stops working. [1]"
+    },
+    {
+      "id": "study-unanswerable",
+      "category": "study",
+      "status": "ok",
+      "passed": false,
+      "failures": [
+        "answer_lacks_any"
+      ],
+      "skipped_because": null,
+      "agents": [
+        "study"
+      ],
+      "tools": [
+        "search_materials"
+      ],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 14501,
+      "first_token_ms": 14411,
+      "tokens": 3583,
+      "run_id": "0cb01045-dd14-4701-a537-30f373c4cffc",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "Your notes do not cover the French Revolution.  \nFrom general knowledge: the French Revolution was a period of radical social and political upheaval in France from 1789 to 1799, which led to the overthrow of the monarchy, the rise of republican ideals, and eventually the ascent of Napoleon Bonaparte."
+    },
+    {
+      "id": "study-hindi",
+      "category": "study",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "study"
+      ],
+      "tools": [
+        "search_materials"
+      ],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 14238,
+      "first_token_ms": 14080,
+      "tokens": 3492,
+      "run_id": "ed72d44b-2084-47b5-a64f-9925cd043de2",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "प्रकाश संश्लेषण में कैल्विन चक्र (Calvin cycle) कार्बन डाइऑक्साइड को स्थिर करके तीन‑कार्बन शर्करा (G3P) बनाता है, जिसे पौधा ग्लूकोज़ और अन्य कार्बोहाइड्रेट बनाने के लिए उपयोग करता है। यह प्रक्रिया प्रकाश चरण से प्राप्त ATP और NADPH का उपयोग करती है। [1]"
+    },
+    {
+      "id": "study-gujarati",
+      "category": "study",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "study"
+      ],
+      "tools": [
+        "search_materials"
+      ],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 10624,
+      "first_token_ms": 10508,
+      "tokens": 3355,
+      "run_id": "ef743c71-b4e7-43fc-8dab-266d504e1a42",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "The Krebs (citric acid) cycle takes place in the **mitochondrial matrix** of eukaryotic cells.  \n[1][5]"
+    },
+    {
+      "id": "study-diagram",
+      "category": "study",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "study"
+      ],
+      "tools": [
+        "search_materials"
+      ],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 4134,
+      "first_token_ms": 3961,
+      "tokens": 3877,
+      "run_id": "4ddf2009-ed92-442d-a771-4de491b6c480",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "Below is a simple flowchart that shows the main steps of the Calvin cycle, using the information from your class notes.\n\n```mermaid\nflowchart TD\n  A[\"CO₂ + RuBP\"] --> B[\"6‑Phosphoglycerate (6‑PGA)\"]\n  B --> C[\"Glyceraldehyde‑3‑Phosphate (G3P)\"]\n  C --> D[\"Regenerate RuBP\"]\n  B -->|ATP| B1[\"ATP (used)\"]\n  B -->|NADPH| B2[\"NADPH (used)\"]\n  D -->|ATP| D1[\"ATP (used)\"]\n  D -->|NADPH| D2[\"NADPH (used)\"]\n```\n\nThe cycle uses ATP and NADPH produced in the light reactions to convert CO₂ into G3P, which can then be used to build glucose.  \n[1]"
+    },
+    {
+      "id": "study-followup-general",
+      "category": "study",
+      "status": "ok",
+      "passed": true,
+      "failures": [],
+      "skipped_because": null,
+      "agents": [
+        "study"
+      ],
+      "tools": [
+        "search_materials"
+      ],
+      "cards": [],
+      "guard": [],
+      "error": null,
+      "total_ms": 21611,
+      "first_token_ms": 21374,
+      "tokens": 3780,
+      "run_id": "6943f135-bad2-4702-9b6b-7604ed911b14",
+      "faithfulness": null,
+      "topic": null,
+      "judge_error": null,
+      "answer": "The Krebs cycle (also called the citric‑acid cycle) is the middle step of cellular respiration.  \n- After glucose is split into two pyruvate molecules in glycolysis, the pyruvate enters the mitochondria.  \n- In the mitochondrial matrix, the Krebs cycle turns each pyruvate into a series of reactions that produce two important energy carriers: **NADH** and **FADH₂**.  \n- These carriers then feed into the electron‑transport chain, which makes most of the cell’s ATP (about 30–32 molecules per glucose) [1][2].\n\nIn short, the Krebs cycle is a round‑about set of reactions that harvests energy from glucose and supplies the electron‑transport chain with the molecules it needs to generate ATP."
+    }
+  ]
+}

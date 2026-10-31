@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320" role="img" aria-labelledby="t d">
+  <title id="t">MindNest AI</title>
+  <desc id="d">MindNest AI: an AI-powered study platform that answers from your own notes, in English, Hindi and Gujarati.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1020"/>
+      <stop offset="1" stop-color="#111a33"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0.15" cy="0.2" r="0.6">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0.9" cy="0.9" r="0.6">
+      <stop offset="0" stop-color="#34d399" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#34d399" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#22d3ee"/>
+      <stop offset="1" stop-color="#34d399"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="320" rx="24" fill="url(#bg)"/>
+  <rect width="1280" height="320" rx="24" fill="url(#glowA)"/>
+  <rect width="1280" height="320" rx="24" fill="url(#glowB)"/>
+  <rect x="0.5" y="0.5" width="1279" height="319" rx="23.5" fill="none" stroke="#ffffff" stroke-opacity="0.12"/>
+
+  <!-- mark: a nest of three open rings around a dot -->
+  <g transform="translate(150 160)" fill="none" stroke="url(#ring)" stroke-linecap="round">
+    <circle r="78" stroke-width="6" stroke-dasharray="360 130" transform="rotate(-30)"/>
+    <circle r="56" stroke-width="6" stroke-dasharray="250 100" transform="rotate(70)"/>
+    <circle r="34" stroke-width="6" stroke-dasharray="150 64" transform="rotate(190)"/>
+    <circle r="9" fill="url(#ring)" stroke="none"/>
+  </g>
+
+  <g font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif">
+    <text x="270" y="150" font-size="76" font-weight="700" fill="#f4f7ff" letter-spacing="-1.5">MindNest AI</text>
+    <text x="272" y="198" font-size="26" fill="#aebbd8">Study from your own notes. Cited answers, quizzes, plans.</text>
+    <text x="272" y="242" font-size="20" fill="#7f8fb2">English · हिन्दी · ગુજરાતી   |   Bring your own AI key   |   Private by design</text>
+  </g>
+</svg>

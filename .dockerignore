@@ -1,0 +1,27 @@
+# Files Docker should not send to the build. The images only COPY pyproject.toml, alembic.ini,
+# libs, services, infra/migrations (Python) and package.json, pnpm-workspace.yaml, apps/web (web),
+# so everything below is safe to leave out. It keeps builds fast and stops a host-built
+# node_modules or .next folder from overwriting the one installed inside the image.
+.git
+.github
+**/.git
+**/node_modules
+**/.next
+**/__pycache__
+**/*.py[cod]
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.hypothesis
+htmlcov
+*.egg-info
+build
+dist
+.venv
+venv
+.env
+.env.*
+_to_delete
+backups
+*.log
+evals/corpus

@@ -1,0 +1,5 @@
+# Shell scripts and Caddy/Docker files must keep Unix line endings, or they fail on the Linux server.
+*.sh text eol=lf
+Caddyfile text eol=lf
+*.Dockerfile text eol=lf
+compose*.yaml text eol=lf

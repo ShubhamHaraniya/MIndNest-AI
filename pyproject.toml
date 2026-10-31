@@ -1,0 +1,118 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mindnest"
+version = "0.1.0"
+description = "MindNest AI: an AI-powered student learning platform"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30",
+    "alembic>=1.14",
+    "pydantic-settings>=2.6",
+    "celery[redis]>=5.4",
+    "argon2-cffi>=23.1",
+    "email-validator>=2.2",
+    "aiosmtplib>=3.0",
+    "redis>=5.2",
+    "tzdata>=2024.2",
+    "httpx>=0.27",
+    "python-multipart>=0.0.12",
+    "boto3>=1.35",
+    # Reading study material (M2). Tesseract itself is a system package, installed in the image.
+    "pypdf>=5.0",
+    "pypdfium2>=4.30",
+    "python-pptx>=1.0",
+    "python-docx>=1.1",
+    "pytesseract>=0.3.13",
+    "Pillow>=10.4",
+    # Encrypting users' provider API keys (M3).
+    "cryptography>=43",
+    # The agent layer: LangGraph runs the agents, LangChain talks to the four providers,
+    # LangSmith records traces (masked). NeMo Guardrails and Ragas arrive with their own parts.
+    "langchain-core>=1.0",
+    "langgraph>=1.0",
+    "mcp>=1.30,<2",
+    "langgraph-checkpoint-postgres>=3.0",
+    "psycopg[binary,pool]>=3.2",
+    "langchain-anthropic>=1.0",
+    "langchain-openai>=1.0",
+    "langchain-google-genai>=3.0",
+    "langchain-groq>=1.0",
+    "langsmith>=0.4",
+    "nemoguardrails>=0.24,<0.25",
+]
+
+[project.optional-dependencies]
+# Local embedding and rerank service. Install a CUDA build of torch first (see README).
+models = [
+    "torch>=2.6",
+    "sentence-transformers>=3.0",
+]
+# Agent evaluation scores (python -m mindnest_agents.evaluation live). The offline mode needs none
+# of this. langchain-community is held below 0.4 because Ragas 0.4 cannot import it otherwise.
+eval = [
+    "ragas>=0.4,<0.5",
+    "langchain-community>=0.3.31,<0.4",
+    "openai>=2.45",
+    "instructor>=1.17",
+]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.8",
+    "mypy>=1.13",
+]
+
+[tool.setuptools]
+packages = [
+    "mindnest_core",
+    "mindnest_agents",
+    "mindnest_agents.guardrails",
+    "mindnest_agents.evaluation",
+    "mindnest_api",
+    "mindnest_api.routes",
+    "mindnest_api.agent",
+    "mindnest_api.agent.agents",
+    "mindnest_worker",
+    "mindnest_models",
+    "mindnest_calendar_mcp",
+]
+
+[tool.setuptools.package-dir]
+mindnest_core = "libs/core/mindnest_core"
+mindnest_agents = "libs/agents/mindnest_agents"
+"mindnest_agents.guardrails" = "libs/agents/mindnest_agents/guardrails"
+"mindnest_agents.evaluation" = "libs/agents/mindnest_agents/evaluation"
+mindnest_api = "services/api/mindnest_api"
+"mindnest_api.routes" = "services/api/mindnest_api/routes"
+"mindnest_api.agent" = "services/api/mindnest_api/agent"
+"mindnest_api.agent.agents" = "services/api/mindnest_api/agent/agents"
+mindnest_worker = "services/worker/mindnest_worker"
+mindnest_models = "services/models/mindnest_models"
+mindnest_calendar_mcp = "services/calendar_mcp/mindnest_calendar_mcp"
+
+[tool.pytest.ini_options]
+testpaths = ["services", "libs"]
+asyncio_mode = "auto"
+addopts = "--import-mode=importlib"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "UP"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+# The four packages live in separate folders and editable installs are invisible to mypy,
+# so point it at the source roots directly.
+mypy_path = "libs/core:libs/agents:services/api:services/worker:services/models:services/calendar_mcp"
+ignore_missing_imports = true
+check_untyped_defs = true

@@ -1,0 +1,250 @@
+# Production stack. Start it with scripts/prod.sh (see docs/runbooks/production.md); do not run
+# `docker compose` on this file directly, because the script checks your settings first.
+#
+# What is reachable from the internet: Caddy on ports 80 and 443, nothing else. Postgres, Redis and
+# file storage sit on an internal network with no route out and no published ports.
+#
+# Optional parts are Compose "profiles", chosen with COMPOSE_PROFILES in .env.production:
+#   storage  the bundled S3 file storage (leave it out if you set S3_ENDPOINT_URL to a hosted bucket)
+#   models   the embedding and rerank service on CPU (leave it out if MODEL_SERVICE_URL points at
+#            another machine, for example one with a GPU)
+name: mindnest-prod
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+x-hardening: &hardening
+  restart: unless-stopped
+  logging: *logging
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+
+x-app-env: &app-env
+  ENVIRONMENT: production
+  SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is not set}
+  DATABASE_URL: postgresql+asyncpg://mindnest_app:${APP_DB_PASSWORD:?APP_DB_PASSWORD is not set}@postgres:5432/mindnest
+  REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD is not set}@redis:6379/0
+  S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://storage:9000}
+  S3_ACCESS_KEY: ${S3_ACCESS_KEY:?S3_ACCESS_KEY is not set}
+  S3_SECRET_KEY: ${S3_SECRET_KEY:?S3_SECRET_KEY is not set}
+  S3_BUCKET: ${S3_BUCKET:-mindnest-materials}
+  MODEL_SERVICE_URL: ${MODEL_SERVICE_URL:-http://models:8100}
+  WEB_BASE_URL: https://${DOMAIN:?DOMAIN is not set}
+  CORS_ORIGINS: '["https://${DOMAIN}"]'
+  SMTP_HOST: ${SMTP_HOST:?SMTP_HOST is not set}
+  SMTP_PORT: ${SMTP_PORT:-587}
+  SMTP_SECURITY: ${SMTP_SECURITY:-starttls}
+  SMTP_USER: ${SMTP_USER:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  MAIL_FROM: ${MAIL_FROM:?MAIL_FROM is not set}
+  GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+  GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+  AGENT_TRACING: ${AGENT_TRACING:-false}
+  LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
+  LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-mindnest-ai}
+  GUARDRAILS_ENABLED: ${GUARDRAILS_ENABLED:-true}
+  GUARDRAILS_JUDGE: ${GUARDRAILS_JUDGE:-true}
+  GUARDRAILS_JUDGE_TIMEOUT_SECONDS: ${GUARDRAILS_JUDGE_TIMEOUT_SECONDS:-8}
+
+x-python-service: &python-service
+  <<: *hardening
+  build:
+    context: .
+    dockerfile: infra/docker/api.Dockerfile
+  image: mindnest-python:prod
+  environment: *app-env
+  tmpfs:
+    - /tmp
+
+services:
+  caddy:
+    <<: *hardening
+    image: caddy:2-alpine
+    cap_add:
+      - NET_BIND_SERVICE
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN is not set}
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL is not set}
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+
+  web:
+    <<: *hardening
+    build:
+      context: .
+      dockerfile: infra/docker/web.Dockerfile
+    image: mindnest-web:prod
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/login || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      api:
+        condition: service_healthy
+
+  api:
+    <<: *python-service
+    command: ["uvicorn", "mindnest_api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/ready', timeout=3)"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks: [default, data]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  worker:
+    <<: *python-service
+    command:
+      ["celery", "-A", "mindnest_worker.app:celery_app", "worker", "--loglevel=INFO", "--concurrency=2", "-Q", "default"]
+    networks: [default, data]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  # Evaluation runs, one at a time (see compose.yaml for why).
+  eval-worker:
+    <<: *python-service
+    command:
+      ["celery", "-A", "mindnest_worker.app:celery_app", "worker", "--loglevel=INFO", "--concurrency=1", "-Q", "eval", "-n", "eval@%h"]
+    networks: [default, data]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  # The only service that holds the database owner password. It applies migrations at start-up
+  # and is also how you run admin commands (see docs/runbooks/admin.md).
+  migrate:
+    <<: *python-service
+    restart: "no"
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      <<: *app-env
+      MIGRATION_DATABASE_URL: postgresql+asyncpg://mindnest:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is not set}@postgres:5432/mindnest
+    networks: [data]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    <<: *hardening
+    image: pgvector/pgvector:pg16
+    # Postgres needs a few capabilities at start-up (it changes user and file owners).
+    cap_drop: []
+    environment:
+      POSTGRES_USER: mindnest
+      POSTGRES_DB: mindnest
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is not set}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD is not set}
+      EVAL_DB_PASSWORD: ${EVAL_DB_PASSWORD:?EVAL_DB_PASSWORD is not set}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/compose/initdb-prod:/docker-entrypoint-initdb.d:ro
+    networks: [data]
+    shm_size: 256mb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mindnest -d mindnest"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    <<: *hardening
+    image: redis:7-alpine
+    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\" --appendonly yes"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is not set}
+    volumes:
+      - redisdata:/data
+    networks: [data]
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$REDIS_PASSWORD\" redis-cli ping | grep -q PONG"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+
+  # Bundled S3-compatible file storage. RustFS is still pre-1.0: after the first successful start
+  # replace `latest` with the exact version you tested, or use a hosted bucket (S3_ENDPOINT_URL).
+  storage:
+    <<: *hardening
+    profiles: [storage]
+    image: rustfs/rustfs:latest
+    cap_drop: []
+    user: "0:0"
+    environment:
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ENABLE: "false"
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY:?S3_ACCESS_KEY is not set}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY:?S3_SECRET_KEY is not set}
+      RUSTFS_LOG_LEVEL: info
+    volumes:
+      - storagedata:/data
+    networks: [data]
+
+  # Embedding and rerank models on CPU. Needs about 8 GB of free memory; the first start
+  # downloads a few GB into the modelcache volume.
+  models:
+    <<: *hardening
+    profiles: [models]
+    build:
+      context: .
+      dockerfile: infra/docker/models.Dockerfile
+    image: mindnest-models:prod
+    volumes:
+      - modelcache:/home/app/.cache
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8100/health', timeout=3)"
+      interval: 30s
+      timeout: 5s
+      retries: 10
+      start_period: 120s
+
+networks:
+  # Normal network: Caddy, web, api, workers and models can reach the internet (AI providers,
+  # Google, mail, model downloads).
+  default: {}
+  # Internal network: no route out. Postgres, Redis and file storage live only here.
+  data:
+    internal: true
+
+volumes:
+  pgdata:
+  redisdata:
+  storagedata:
+  modelcache:
+  caddy_data:
+  caddy_config:

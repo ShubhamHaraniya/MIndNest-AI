@@ -1,0 +1,100 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# MindNest AI .gitignore
+# Anything here can be regenerated, or must never be committed (secrets, data, caches).
+# Check what Git sees at any time with:  git status --ignored
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Secrets and local configuration ──────────────────────────────────────────
+# Real settings never go in Git. The *.example files are the templates and ARE committed.
+.env
+.env.*
+!.env.example
+!.env.production.example
+*.pem
+*.key
+google-credentials*.json
+client_secret*.json
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+.eggs/
+.venv/
+venv/
+build/
+dist/
+*.whl
+pip-wheel-metadata/
+.python-version
+
+# Tool caches (all regenerated on the next run)
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.hypothesis/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Jupyter, if anyone experiments
+.ipynb_checkpoints/
+
+# ── Node / Next.js ───────────────────────────────────────────────────────────
+node_modules/
+.pnpm-store/
+.next/
+out/
+*.tsbuildinfo
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── Docker and local data ────────────────────────────────────────────────────
+pgdata/
+docker-compose.override.yml
+compose.override.yaml
+
+# ── Machine-learning model caches (BGE-M3 and the reranker are several GB) ──
+.cache/
+hf_cache/
+huggingface/
+models_cache/
+*.safetensors
+*.gguf
+*.onnx
+
+# ── Evaluation corpus PDFs (fetch them with evals/corpus/download.ps1) ──────
+evals/corpus/*.pdf
+
+# ── Backups, logs, scratch ───────────────────────────────────────────────────
+backups/
+*.log
+*.sql.gz
+*.dump
+tmp/
+.tmp/
+_to_delete/
+
+# ── Editors and operating systems ────────────────────────────────────────────
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Private notes (kept on this computer, not published) ─────────────────────
+# Interview preparation and the vulnerability-reporting note are for the owner only.
+# If a file below was committed earlier, ignoring it is not enough: run
+#   git rm --cached INTERVIEW.md SECURITY.md
+INTERVIEW.md
+SECURITY.md

@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel an older run of the same branch when a newer commit arrives.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: mindnest
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql+asyncpg://mindnest_app:mindnest_app@localhost:5432/mindnest
+      MIGRATION_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/mindnest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Lint
+        run: ruff check .
+      - name: Type check
+        run: mypy -p mindnest_core -p mindnest_agents -p mindnest_api -p mindnest_worker -p mindnest_models
+      - name: Create database roles
+        run: PGPASSWORD=postgres psql -h localhost -U postgres -d mindnest -f infra/compose/initdb/01-roles.sql
+      - name: Migrate
+        run: alembic upgrade head
+      - name: OpenAPI contract is up to date
+        run: python scripts/export_openapi.py --check
+      - name: Test
+        run: pytest
+
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: corepack enable
+      - name: Install
+        run: pnpm install --no-frozen-lockfile
+      - name: Type check
+        run: pnpm --filter @mindnest/web typecheck
+      - name: Build
+        run: pnpm --filter @mindnest/web build
