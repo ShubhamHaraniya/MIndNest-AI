@@ -87,6 +87,26 @@ def test_retrieval_scores_for_two_pieces_of_evidence():
     assert abs(scores["precision_at_k"] - 2 / 3) < 1e-9
 
 
+def test_recall_looks_deeper_than_k_but_k_metrics_stop_at_k():
+    passages = [view(f"filler {n}") for n in range(1, 8)] + [view("the needle fact"), view("x"), view("y")]
+    evidence = [Evidence("needle fact")]  # the 8th passage
+    scores = retrieval_scores(passages, evidence, k=6)
+    assert scores["recall_at_1"] == scores["recall_at_3"] == scores["recall_at_5"] == 0.0
+    assert scores["recall_at_10"] == 1.0  # found by depth 10, even though K is 6
+    assert scores["recall_at_k"] == 0.0 and scores["hit_at_k"] == 0.0 and scores["mrr"] == 0.0
+    assert scores["precision_at_k"] == 0.0
+    wide = retrieval_scores(passages, evidence, k=10)
+    assert wide["recall_at_k"] == 1.0 and wide["mrr"] == 1 / 8
+
+
+def test_recall_at_5_counts_the_fifth_passage_but_not_the_sixth():
+    base = [view("filler")] * 4
+    fifth = retrieval_scores([*base, view("needle")], [Evidence("needle")], k=6)
+    sixth = retrieval_scores([*base, view("filler"), view("needle")], [Evidence("needle")], k=6)
+    assert fifth["recall_at_5"] == 1.0 and sixth["recall_at_5"] == 0.0
+    assert sixth["recall_at_10"] == 1.0 and sixth["recall_at_k"] == 1.0
+
+
 def test_retrieval_scores_when_nothing_matches_or_nothing_was_found():
     assert retrieval_scores([view("x")], [Evidence("needle")])["mrr"] == 0.0
     empty = retrieval_scores([], [Evidence("needle")])

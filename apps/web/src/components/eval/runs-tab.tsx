@@ -177,6 +177,7 @@ export function RunsTab({
                     </Td>
                     <Td align="right" className="tabular">
                       {formatMetric("recall_at_k", metrics.recall_at_k)}
+                      <span className="block text-xs text-muted">{t("evx.k", { k: run.config.top_k })}</span>
                       <LanguageScores run={run} metric="recall_at_k" />
                     </Td>
                     <Td align="right" className="tabular">

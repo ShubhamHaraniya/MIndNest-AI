@@ -69,6 +69,9 @@ The principles that explain most decisions:
 
 ## 2. System architecture
 
+Source: `compose.yaml`, `compose.prod.yaml`, `infra/docker/` (the three Dockerfiles), `infra/caddy/Caddyfile`,
+`services/api/mindnest_api/main.py` (app start-up) and `middleware.py`.
+
 ### 2.1 Processes
 
 | Process | Technology | Responsibility |
@@ -155,7 +158,35 @@ A quick map of `libs/core/mindnest_core`:
 | `safetystore.py` | Writes safety events (kinds and counts only, never the text). |
 | `adminctl.py`, `prodcheck.py` | Operator command-line tools. |
 
+### Where the code for each feature lives
+
+| Feature | Where to look |
+| --- | --- |
+| Upload and ingestion | `services/worker/mindnest_worker/` (`pipeline.py`, `parsing.py`, `chunking.py`, `language.py`); route `routes/materials.py`; file checks in `libs/core/.../filetypes.py` |
+| Embeddings and reranking | `services/models/mindnest_models/` (`main.py`, `backends.py`); client side in `services/api/mindnest_api/retrieval.py` |
+| Retrieval (baseline, hybrid, advanced, advanced_hybrid; BM25 keyword ranking) | `services/api/mindnest_api/retrieval.py`, `libs/core/mindnest_core/bm25.py`; settings `retrieval_top_k` and `retrieval_candidates` in `libs/core/.../settings.py` |
+| Chat, streaming, prompts | `services/api/mindnest_api/routes/chat.py`, `chat_extras.py` (attachments, scope, feedback), `prompts.py`, `llm.py`; rules in `libs/core/.../chatlogic.py` |
+| Agents (graph, router, tools) | `services/api/mindnest_api/agent/` (`graph.py`, `router.py`, `registry.py`, `tools.py`, `runner.py`, `context.py`, `agents/<name>.py`); checkpoints in `libs/agents/.../checkpoint.py` |
+| Guardrails (NeMo + rules) | `libs/agents/mindnest_agents/guardrails/` (`rules.py`, `engine.py`, `config.py`, `judge.py`, `messages.py`); `libs/core/.../aisafety.py`, `redact.py` |
+| Calendar over MCP | `services/calendar_mcp/mindnest_calendar_mcp/server.py`; `libs/core/.../mcptoken.py`; API side `calendar_gateway.py` and `routes/calendar_events.py`, `calendar_google.py`, `gcal.py` |
+| Quizzes and revision cards | `libs/core/.../quizlogic.py`, `quizcheck.py`, `quizstore.py`; worker `quizzes.py`; routes `quizzes.py`, `quiz_exam.py`; `revisions.py` |
+| Study planner | `libs/core/.../plannerlogic.py`, `taskstate.py`; route `routes/planner.py` |
+| Assignment Helper | `libs/core/.../assignlogic.py`; worker `assignments.py`; routes `assignments.py`, `assignment_workspace.py` |
+| Dashboard and progress | `libs/core/.../dashlogic.py`, `subjectlogic.py`; routes `dashboard.py`, `stats.py`, `subjects.py` |
+| Accounts, sessions, rate limits | `services/api/mindnest_api/routes/auth.py`, `google_auth.py`, `me.py`, `account.py`; `security.py`, `deps.py`, `ratelimit.py`, `mailer.py` |
+| AI provider keys | `routes/providers.py`; `libs/core/.../vault.py` (Fernet) |
+| Groups, library, admin, notifications | `libs/core/.../grouplogic.py`, `librarylogic.py`, `adminctl.py`; routes `groups.py`, `group_collab.py`, `library.py`, `admin.py`, `notifications.py` |
+| Evaluation Lab (retrieval) | `libs/core/.../evalmetrics.py`, `evaldata.py`; worker `evaluation.py`; route `routes/evaluation.py`; web `components/eval-*.tsx`; data in `evals/` |
+| Agent evaluation | `libs/agents/mindnest_agents/evaluation/`; cases `evals/agents/agent_v1.jsonl`; scripts `scripts/eval-agents.ps1`, `run-evals.ps1`, `compare-eval-reports.ps1` |
+| Database schema, indexes, RLS | `infra/migrations/versions/` (the first migration `0001_initial_schema.py` creates the HNSW and GIN indexes); `libs/core/.../db.py` |
+| Web app | `apps/web/src/` (`app/` pages, `components/`, `i18n/` catalogs, `lib/` API client and helpers) |
+| Deployment and backups | `compose.yaml`, `compose.prod.yaml`, `infra/caddy/Caddyfile`, `scripts/prod.sh`, `backup.sh`, `restore.sh` |
+| Tests and checks | `libs/*/tests`, `services/*/tests`, `scripts/check.ps1`, `.github/workflows/ci.yml` |
+
 ## 4. Database and multi-tenancy
+
+Source: `infra/migrations/versions/` (every table, index, role and policy), `libs/core/mindnest_core/db.py`
+(`user_session`, the row-level-security context) and `services/api/mindnest_api/deps.py`.
 
 ### 4.1 Roles
 
@@ -283,7 +314,51 @@ privileges are SQL concepts, and writing them directly means the migration says 
 database will do. `scripts/export_openapi.py --check` in CI keeps the API contract in step;
 `alembic upgrade head` in CI proves the chain applies on a clean pgvector database.
 
+### 4.6 Indexing strategy
+
+All indexes are created in the migrations (`infra/migrations/versions/`). The rules followed:
+index every column a join or a row-level-security filter uses; put the owner first in
+composite indexes for list screens, with the sort direction the screen uses; use **partial**
+indexes for columns that are mostly empty; use **unique expression** indexes where the rule is about
+meaning (case-insensitive email) and unique indexes where a repeat must be impossible (idempotency).
+
+| Kind | Index | Why |
+| --- | --- | --- |
+| Vector (ANN) | `chunks_embedding_hnsw_idx` on `chunks USING hnsw (embedding vector_cosine_ops)` | Nearest-neighbour search over 1024-dimension vectors without scanning every chunk |
+| Full text | `chunks_tsv_idx` on `chunks USING gin (tsv)` | Keyword search on the generated `tsvector` column |
+| Fuzzy text | `chunks_text_trgm_idx` on `chunks USING gin (text gin_trgm_ops)` | Trigram matching (`pg_trgm`) |
+| Foreign keys (B-tree) | `chunks_material_idx`, `chunks_subject_idx`, `materials_subject_idx`, `materials_owner_idx`, `subjects_owner_idx`, `topics_subject_idx`, `ingestion_jobs_material_idx` | Joins, subject scoping and cascade deletes |
+| Composite, newest first | `conversations_user_updated_idx (user_id, updated_at DESC)`, `messages_conversation_idx (conversation_id, created_at)`, `quizzes_user_idx (user_id, created_at DESC)`, `quiz_attempts_user_idx (user_id, finished_at DESC)`, `eval_runs_user_idx (user_id, created_at DESC)`, `security_events_user_idx (user_id, created_at DESC)` | List screens show a student's own rows in time order, so the index already has them sorted |
+| Composite, "what is due" | `revision_cards_due_idx (user_id, due_at)`, `study_tasks_user_idx (user_id, planned_for)`, `exams_user_idx (user_id, exam_on)`, `assignments_user_idx (user_id, due_at NULLS LAST)`, `calendar_events_user_day_idx (user_id, day)` | Due cards, planner days, exam countdowns and calendar days are all range scans per student |
+| Partial | `materials_opened_idx ... WHERE last_opened_at IS NOT NULL`, `messages_replaces_idx ... WHERE replaces_id IS NOT NULL`, `materials_library_item_idx ... WHERE library_item_id IS NOT NULL`, `group_invitations_email_idx ... WHERE status = 'pending'` | Most rows have no value, so the index stays small |
+| Unique expression | `users_email_lower_idx ON users (lower(email))` | One account per email regardless of capitals |
+| Unique, idempotency | `calendar_events_request_key_uq (user_id, request_key)`, `calendar_events_twin_uq`, `groups_join_code_idx`, `library_items_source_idx`, `group_invitations_pending_uq` | A repeated request or a duplicate join code cannot create a second row |
+| Housekeeping | `sessions_expires_idx`, `sessions_user_idx`, `email_tokens_user_idx`, `admin_audit_created_idx`, `checkpoints_thread_id_idx` and the other two LangGraph checkpoint tables | Expiring sessions and tokens, the audit screen, and loading a run's saved state by thread |
+
+**HNSW versus the alternatives.** HNSW was chosen over IVFFlat because it needs no training step and
+works from the first row; the cost is more memory and slower builds. The index uses **pgvector's
+default settings**: I found no `hnsw.ef_search` or iterative-scan setting in the code, and no
+`m` or `ef_construction` overrides, so nothing is tuned.
+
+**Known limits to be honest about**
+
+* **Filters are applied after the index scan.** Every search filters by subject and, through RLS, by
+  owner. With an approximate index Postgres first takes the nearest candidates (by default about 40)
+  and only then applies the filter, so with many students' chunks in one table a search can return
+  fewer than the 30 candidates asked for. At today's scale this is not a problem. The remedies, in order
+  of effort, are raising `hnsw.ef_search`, enabling iterative index scans (pgvector 0.8 and later), or
+  partitioning by owner.
+* **No separate index on `chunks.owner_id`.** None of the migrations creates one, so the owner part of
+  the row-level-security check relies on the other filters; profile it before it matters.
+* **The keyword leg ORs every word of the question** (section 7.2), which matches many chunks and ranks
+  them with `ts_rank_cd`. That is a plausible contributor to hybrid search scoring below vector-only
+  search in the Lab, but it was not tested on its own. An optional BM25 ranker with common-word
+  pruning (section 7.2) was added to test exactly this: on the larger Lab set hybrid with BM25 beat vector-only on every score (Recall@10 91% to 94%, MRR 0.68 to 0.75; section 7.3).
+
 ## 5. Accounts and authentication
+
+Source: `services/api/mindnest_api/routes/auth.py`, `google_auth.py`, `me.py`, `account.py`, `security.py`,
+`deps.py`, `ratelimit.py`, `mailer.py`; `libs/core/mindnest_core/vault.py`, `adminctl.py`.
 
 | Concern | Implementation |
 | --- | --- |
@@ -443,15 +518,52 @@ code turns the ANDs into ORs so any matching word qualifies, and lets the rankin
 Doing this at the `tsquery` level (rather than splitting the string in Python) keeps Postgres's
 own tokeniser in charge, so Hindi and Gujarati split the same way as when the chunks were indexed.
 `ts_rank_cd` is the *cover density* ranking: it scores a document higher when the query terms
-appear close together.
+appear close together. It is **not BM25**: it has no inverse-document-frequency term (so "the"
+weighs as much as "photosynthesis") and no document-length normalisation.
 
-### 7.3 Three strategies
+#### Optional BM25 ranking
+
+Setting `RETRIEVAL_KEYWORD_RANKER=bm25` (default `ts_rank_cd`) swaps the ordering of the keyword
+leg for a real Okapi BM25 score. Postgres has no BM25, and no extension is needed: the chunk's
+`tsv` column already stores each word with the positions where it occurs, which gives the term
+frequency (number of positions) and the chunk length (sum of positions). Source:
+`libs/core/mindnest_core/bm25.py` (pure scoring, unit-tested in `libs/core/tests/test_bm25.py`) and
+`_bm25_hits` in `services/api/mindnest_api/retrieval.py`.
+
+Steps for one question:
+
+1. Read the question's words with `to_tsvector('simple', question)`.
+2. Ask Postgres, over the same chunks the search may see (subject, chosen files, active, ready):
+   how many chunks there are (*N*), the average chunk length in tokens (*avgdl*), and for each word
+   in how many chunks it appears (*df*; answered through the GIN index).
+3. Keep the words that decide the match: drop words found nowhere, and words found in more than half
+   the chunks ("what", "is", "the"), unless nothing else is left.
+4. Fetch up to 300 chunks matching any of those words (cover-density order only picks the pool) with
+   their stored `tsv`.
+5. Score each chunk in Python and keep the top N:
+
+> score(d) = Σ over question words t of idf(t) · tf · (k1 + 1) / (tf + k1 · (1 − b + b · dl / avgdl))
+> idf(t) = ln(1 + (N − df + 0.5) / (df + 0.5)),  k1 = 1.2,  b = 0.75
+
+All question words are scored, including common ones, but a common word's low idf makes it count
+for little. The result then goes through the same RRF merge as before.
+
+This was added to test the suspicion in section 4.6 that the keyword leg was dragging hybrid
+below vector-only search. **Result (section 7.3):** on the small 26-question set hybrid went from
+Recall@3 72% to 85% and MRR 0.67 to 0.74; on the larger 153-answerable set it beat vector-only on every
+score (Recall@10 91% to 94%, MRR 0.68 to 0.75). Each Lab run records the ranker it used in its configuration
+(`keyword_ranker`), so two hybrid runs can be compared honestly. Cost: the statistics query reads
+the `tsv` of every chunk in scope once per question, which is fine at one student's library size
+but is the first thing to cache if it ever is not.
+
+### 7.3 Four strategies
 
 | Mode | Steps | Score of passage at 0-based position *i* |
 | --- | --- | --- |
 | `baseline` | vector top-N, keep the top K | 1 / (i + 1) |
 | `hybrid` | vector top-N **and** full-text top-N, merged with **reciprocal rank fusion**, keep K | Σ over lists of 1 / (60 + i + 1) |
 | `advanced` (default for chat and search) | vector top-N candidates, then a **cross-encoder** reranks them, keep K | the reranker's score |
+| `advanced_hybrid` (Lab; chat can use it via `RETRIEVAL_ADVANCED_CANDIDATES=hybrid`) | vector top-N **and** full-text top-N merged with RRF, cut to N, then the **cross-encoder** reranks them, keep K | the reranker's score |
 
 With the defaults `N = retrieval_candidates = 30` and `K = retrieval_top_k = 6`.
 
@@ -478,20 +590,74 @@ multilingual, so cross-language questions work, and the reranker restores precis
 search is kept as the **fallback** when the question cannot be embedded, and as the second leg of
 `hybrid` so the Evaluation Lab can measure whether it helps on a given corpus.
 
-**Measured result (RAG Lab, English set of 26 questions, 23 answerable, one run, October 2026).**
+**Measured result (RAG Lab, `evals/datasets/rag_v2_en.jsonl`: 168 English questions, 153 answerable, 15 unanswerable, seven documents, K = 10 kept from 30 candidates, one run per mode, November 2026).** Recall@K is Recall@10 here.
 
-| Mode | Recall@1 | Recall@3 | Recall@K | Precision@K | Hit@K | MRR | Search time, median |
+| Mode | Recall@1 | Recall@3 | Recall@5 | Recall@10 | Precision@10 | Hit@10 | MRR | Search time, median | Slowest 5% |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `baseline` | 53% | 77% | 82% | 91% | 11% | 92% | 0.68 | 48 ms | 65 ms |
+| `hybrid` (keyword leg: BM25) | 61% | 83% | 90% | 94% | 12% | 95% | 0.75 | 214 ms | 255 ms |
+| `advanced` (vector candidates; chat default) | 76% | 91% | 93% | 95% | 12% | 96% | 0.86 | 542 ms | 765 ms |
+| `advanced_hybrid` (merged candidates) | 77% | 92% | 94% | 97% | 13% | 97% | 0.87 | 649 ms | 864 ms |
+
+Reading it. The reranker mostly fixes the *order*: vector-only already has the evidence in its top 10 for
+91% of questions but first for only 53%; reranking lifts Recall@1 by 23 points and Recall@3 by 14, while
+Recall@10 moves 4 points. Hybrid with a BM25 keyword leg beats vector-only on every score (Recall@1 +8,
+Recall@3 +6, Recall@5 +8, Recall@10 +3, MRR +0.07), the advantage shrinking with depth, at about 4.5 times
+the search time. Feeding the keyword candidates to the reranker (`advanced_hybrid`) is within 0.6 to 1.6
+points of plain `advanced` on every score; with 153 answerable questions one question is about 0.65 points,
+so that is one to three questions, within noise, for about 110 ms more, and chat keeps vector candidates.
+About 3% of answerable questions (four or five) have no evidence in the top 10 even for the best mode; they
+have not been inspected. Precision@10 is low by construction (one or two evidence passages per question).
+
+**Earlier run, same questions, K = 6** (three methods; the reranked row is `advanced_hybrid`, run before the Lab
+had a mode for it; Precision, Hit and MRR depend on K, so they are not comparable with the K = 10 table):
+
+| Mode | Recall@1 | Recall@3 | Recall@6 | Precision@6 | Hit@6 | MRR | Search time, median |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `baseline` | 54% | 89% | 89% | 21% | 91% | 0.73 | 58 ms |
-| `hybrid` | 54% | 72% | 85% | 18% | 87% | 0.67 | 74 ms |
-| `advanced` | 80% | 98% | 98% | 25% | 100% | 0.90 | 976 ms |
+| `baseline` | 53% | 77% | 85% | 17% | 86% | 0.67 | 42 ms |
+| `hybrid` (BM25) | 61% | 83% | 92% | 19% | 93% | 0.75 | 203 ms |
+| `advanced_hybrid` | 77% | 92% | 96% | 20% | 96% | 0.87 | 628 ms |
 
-The reranker moves the right passage to the top (Recall@1 +26 points, MRR +0.17) at about 17 times
-the search time of vector-only retrieval, which is why chat uses `advanced`. `hybrid` did **not** help on
-this corpus and the cause was not isolated, so it remains a comparison mode and not part of the chat
-path. Precision@K is low by construction (K = 6, one or two evidence passages per question). Hindi and
-Gujarati retrieval were not part of this run. See the README for the screenshot and the list of
-retrieval improvements.
+**Earlier runs, 26-question set** (`rag_v1_en.jsonl`, 23 answerable, one question about 4 points; kept as
+history, replaced as the headline for being too small):
+
+| Mode | Recall@1 | Recall@3 | Recall@K | Precision@K | Hit@K | MRR |
+| --- | --- | --- | --- | --- | --- | --- |
+| `baseline` | 54% | 89% | 89% | 21% | 91% | 0.73 |
+| `hybrid`, keyword leg `ts_rank_cd` | 54% | 72% | 85% | 18% | 87% | 0.67 |
+| `hybrid`, keyword leg BM25 | 59% | 85% | 93% | 23% | 96% | 0.74 |
+| `advanced` (vector candidates) | 80% | 98% | 98% | 25% | 100% | 0.90 |
+
+On that small set hybrid with `ts_rank_cd` was worse than vector-only and BM25 brought it to about level;
+on the larger set hybrid with BM25 is clearly ahead. Two changes arrived together with BM25 (the scoring
+and dropping words found in over half the chunks), so which one mattered is not isolated. Search times
+vary between runs (advanced took 976, 499, 628 and 542 ms), so compare times only within a run. No Hindi or
+Gujarati figure is quoted: `rag_v2.jsonl` contains such questions, but their wording is AI-written and
+unreviewed. See the README for the list of retrieval improvements.
+
+#### Optional: advanced with hybrid candidates
+
+By default `advanced` reranks the vector top 30. The Lab has a fourth mode, `advanced_hybrid`, that reranks
+the **merged** list instead, and the setting `RETRIEVAL_ADVANCED_CANDIDATES=hybrid` (default `vector`)
+does the same for chat's `advanced`. The merged list is built like this: vector top 30 and keyword top 30 (ranked
+by the configured keyword ranker, section 7.2), combined with reciprocal rank fusion and cut back to 30,
+so the reranker costs the same. The idea is that an exact term, name or number the embedding blurred
+can still reach the reranker, which judges relevance far better than either first-stage list. Source:
+`retrieve` in `services/api/mindnest_api/retrieval.py`. Because chat uses `advanced`, the setting also
+changes chat once turned on. Each Lab run records `advanced_candidates` in its configuration.
+The `advanced_hybrid` row above is that variant. In the Lab, `advanced` always means vector candidates
+whatever the setting says, so both can be run on the same questions. Result: no measurable gain from the
+keyword candidates on this set (Recall@1 77% against 76%, Recall@10 97% against 95%) for about 110 ms more,
+so the chat default stays `vector`. Make sure `.env` does not set `RETRIEVAL_ADVANCED_CANDIDATES=hybrid`
+unless you want chat to use it.
+
+**Recall depth and K.** `retrieval_scores` returns Recall@1, @3, @5, @10 and @K, plus Precision@K, Hit@K
+and MRR. Each Lab run searches at least 10 passages deep (`RECALL_DEPTH` in `services/worker/
+mindnest_worker/evaluation.py`) so Recall@5 and Recall@10 exist even when K is 6; Recall@K, Precision@K,
+Hit@K and MRR use only the first K, and answers are written from those K. The run dialog has fields for K
+(1 to 20, default 6) and for the number of candidates N (5 to 100, default 30), and every run page, run
+list and comparison shows the K used. Runs made before this change have no Recall@5 or Recall@10. The measured table above used K = 10, which makes
+Recall@K equal to Recall@10.
 
 ### 7.4 Graceful degradation
 
@@ -982,6 +1148,9 @@ agent also never claims an action without a tool result confirming it.
 
 ## 14. Groups, library and admin
 
+Source: `libs/core/mindnest_core/grouplogic.py`, `librarylogic.py`, `adminctl.py`; routes `groups.py`,
+`group_collab.py`, `library.py`, `admin.py`, `notifications.py` under `services/api/mindnest_api/routes/`.
+
 * **Study groups** (`grouplogic.py`, routes `groups.py`, `group_collab.py`). A group is joined with
   a code (`new_join_code`; normalised and displayed with separators); roles and removal rules are
   pure functions (`is_admin`, `can_remove_member`, `can_set_role`); members can share notes, start
@@ -1017,7 +1186,7 @@ order), with `rel_i = 1` when passage *i* contains any evidence:
 
 | Metric | Definition |
 | --- | --- |
-| Recall@k | \|{e ∈ E : e appears in the top k passages}\| ÷ \|E\|. Counts evidence items, so a two-fact question is fully recalled only when both appear. Reported for k = 1, 3 and K. |
+| Recall@k | \|{e ∈ E : e appears in the top k passages}\| ÷ \|E\|. Counts evidence items, so a two-fact question is fully recalled only when both appear. Reported for k = 1, 3, 5, 10 and K (the K the run keeps); a run always searches at least 10 deep so @5 and @10 exist. |
 | Precision@K | Σ_i rel_i ÷ K |
 | Hit@K | 1 if any `rel_i = 1`, else 0 |
 | MRR | 1 ÷ (rank of the first relevant passage), 0 if none |
@@ -1031,8 +1200,10 @@ order), with `rel_i = 1` when passage *i* contains any evidence:
 Results are averaged over a run, per language and per retrieval strategy, so the lab answers the
 practical question "does hybrid or reranking actually help *on this student's documents* in *Hindi*?"
 Runs execute on the dedicated `eval` Celery queue (concurrency 1) and wait and retry politely when a
-free-tier provider rate-limits. The shipped dataset is `evals/datasets/rag_v1.jsonl`: 50
-questions (26 English, 12 Hindi, 12 Gujarati) with an offline checker (`evals/verify_dataset.py`).
+free-tier provider rate-limits. The shipped datasets are `evals/datasets/rag_v2.jsonl`: 218
+questions (168 English, 25 Hindi, 25 Gujarati; `rag_v2_en.jsonl` is the English part) and the smaller
+`rag_v1.jsonl` (50), with an offline checker (`evals/verify_dataset.py`). The Lab offers four search
+methods (baseline, hybrid, advanced, advanced + hybrid).
 
 ### 15.2 Agent evaluation
 
@@ -1211,6 +1382,9 @@ framed, and only by the same origin.
 
 ## 17. Infrastructure and operations
 
+Source: `compose.yaml`, `compose.prod.yaml`, `infra/docker/`, `infra/caddy/Caddyfile`, `scripts/prod.sh`,
+`backup.sh`, `restore.sh`, `.github/workflows/ci.yml`.
+
 ### 17.1 Development stack (`compose.yaml`)
 
 `postgres` (pgvector/pgvector:pg16, runs `initdb` scripts that create roles), `redis`, `mailpit`,
@@ -1255,6 +1429,9 @@ packages, create roles on a real `pgvector/pgvector:pg16` service, `alembic upgr
 Superseded runs on the same branch are cancelled. Dependabot proposes dependency updates weekly.
 
 ## 18. Testing and quality gates
+
+Source: `libs/core/tests`, `libs/agents/tests`, `services/api/tests`, `services/worker/tests`,
+`services/models/tests`, `scripts/check.ps1`, `scripts/export_openapi.py`, `.github/workflows/ci.yml`.
 
 * About **1,000 test functions** in ~16,000 lines: API integration tests (against a migrated
   database, skipping themselves when it is absent), worker tests, pure-logic tests for every
@@ -1305,7 +1482,7 @@ what it costs. Honest trade-offs are the point.
 | Who pays for AI | **Bring your own key** | One shared key, local LLM only | No shared bill or credit abuse; students choose provider/model; privacy options. | Onboarding friction; key custody (mitigated by encryption and redaction). |
 | Embeddings | **BGE-M3**, self-hosted | OpenAI `text-embedding-3`, Cohere, multilingual-e5, LaBSE | Strong multilingual quality including Hindi and Gujarati, 1024 dims, 8k-token capable, free per call, and notes never leave the server for embedding. | Needs a GPU/CPU host and a multi-GB download. |
 | Reranker | **bge-reranker-v2-m3** cross-encoder | None, Cohere Rerank, LLM rerank | Large precision gain on a 30-candidate pool, multilingual, local, fast enough. | Extra model in memory (loaded lazily; CPU fallback). |
-| Chunking | **Sentence-aware ~800 chars, 120 overlap**, danda-aware | Fixed tokens, recursive splitter, semantic chunking | Predictable, cheap, respects `।`/`॥`, keeps cited units small; no extra model. | Not layout-aware (tables and figures). |
+| Chunking | **Hierarchical splitter (paragraph, then sentence, then word), ~800 chars, 120 overlap**, danda-aware; recursive in spirit, written by hand | LangChain `RecursiveCharacterTextSplitter` (no `।`/`॥` awareness, no sentence packing), fixed tokens, semantic chunking | Predictable, cheap, respects `।`/`॥`, keeps cited units small; no extra model. | Not layout-aware (tables and figures). |
 | Language detection | **Script ratio** | langdetect, fastText | Deterministic, instant, handles code-mixed text; labels are display-only. | Cannot split Hindi from Marathi. |
 | OCR | **Tesseract** (eng+hin+guj) | Cloud OCR, PaddleOCR, TrOCR | Free, local, supports all three languages, privacy-preserving. | Lower accuracy on handwriting and poor scans than the best cloud OCR. |
 | Orchestration | **LangGraph** | Hand-written loop, CrewAI, AutoGen, plain LangChain agents | Explicit graph, typed state, built-in checkpointing and **interrupts** (needed for approvals), streaming. | Learning curve; version churn (pinned `>=1.0`). |
@@ -1335,10 +1512,12 @@ what it costs. Honest trade-offs are the point.
   (an invented `[9]` is removed), but the content of a cited claim is not independently verified.
   The Evaluation Lab measures groundedness; it does not guarantee it.
 * **Chat retrieval is semantic-first.** Full-text is a fallback, not part of the default path.
-  Exact-term lookups (a rare identifier) rely on the embedding and reranker. In the one Lab run so far
-  `hybrid` fusion scored slightly *below* vector-only retrieval (section 7.3), cause not isolated.
-* **Evaluation evidence is small.** One run per mode, a 26-question English retrieval set, a 53-case
-  agent set run once on one small model without a judge; Hindi and Gujarati retrieval are unmeasured.
+  Exact-term lookups (a rare identifier) rely on the embedding and reranker unless
+  `RETRIEVAL_ADVANCED_CANDIDATES=hybrid` is set. On the larger Lab set, `hybrid` with a BM25 keyword leg
+  beat vector-only retrieval (section 7.3); with Postgres's own `ts_rank_cd` it did not.
+* **Evaluation evidence is modest.** One run per mode, a 168-question English retrieval set drafted by Claude
+  (not collected from real students), a 53-case agent set run once on one small model without a judge;
+  Hindi and Gujarati retrieval are unmeasured (the questions exist but are unreviewed).
 * **Leitner, not FSRS.** See section 12.1.
 * **CSP allows inline/eval scripts** (Next.js and Mermaid), section 16.6.
 * **Image content inside slides and Word files is not OCR'd.** No per-student storage quota.

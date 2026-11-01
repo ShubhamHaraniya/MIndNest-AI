@@ -1,6 +1,6 @@
 # Evaluation corpus
 
-Documents used by `evals/datasets/rag_v1.jsonl`. Upload all of them to **one subject** in
+Documents used by `evals/datasets/rag_v1.jsonl` and `rag_v2.jsonl`. Upload all of them to **one subject** in
 MindNest, wait until each shows Ready, then run the evaluation.
 
 ## Your own study PDFs (English) — not committed
@@ -42,7 +42,7 @@ letter shapes when the text was read back, which would test the PDF maker, not r
 ## Optional extras
 
 `download.ps1` downloads public papers and NCERT chapters (arXiv, ncert.nic.in). The
-questions in `rag_v1.jsonl` do **not** use them. Adding them to the subject only makes the
+questions in `rag_v1.jsonl` and `rag_v2.jsonl` do **not** use them. Adding them to the subject only makes the
 search harder (more distractor documents), which is a fair stress test but changes the scores.
 
 ## Checking the dataset

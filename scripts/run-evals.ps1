@@ -23,7 +23,7 @@
     -ApiUrl             default http://localhost:3000/api/v1
 
   What the modes measure
-    Dataset     every evidence phrase of evals/datasets/rag_v1.jsonl really occurs in the corpus,
+    Dataset     every evidence phrase of evals/datasets/rag_v2.jsonl really occurs in the corpus,
                 so a low retrieval score later means retrieval, not a broken question.
     Guardrails  the input safety rail on 16 attack and safe messages: attacks stopped,
                 safe messages wrongly stopped, speed. No server, model or key is used.
@@ -205,12 +205,14 @@ function Invoke-RagGuide {
         evals\corpus\            (the PDFs, if you downloaded them)
         evals\corpus\synthetic\  (the shipped text files)
       Wait until every file shows "ready".
-   3. Open http://localhost:3000/eval  ->  import evals\datasets\rag_v1.jsonl
-      (50 questions: 26 English, 12 Hindi, 12 Gujarati). Press "Check against my materials".
+   3. Open http://localhost:3000/eval  ->  import evals\datasets\rag_v2_en.jsonl
+      (168 English questions; rag_v2.jsonl adds 25 Hindi and 25 Gujarati, AI-written, unreviewed). Press "Check against my materials".
    4. Start one run per retrieval mode, WITHOUT answer generation (free, no AI key used):
         baseline   vector search only
         hybrid     vector + full text, fused with reciprocal rank fusion
         advanced   vector + cross-encoder rerank (this is what chat uses)
+        advanced + hybrid   vector + keyword candidates, then the rerank
+      Set K (passages kept, 10 shows Recall@10) in the run dialog.
    5. Start one more "advanced" run WITH generation and the judge turned on. This is the only
       run that spends tokens; it fills citation and answer-quality scores.
    6. Use "Compare runs" and read Recall@K, MRR, citation validity and p50/p95 latency, overall

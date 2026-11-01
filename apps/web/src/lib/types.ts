@@ -257,7 +257,7 @@ export type ChatEvent =
 
 // ---- Evaluation Lab -------------------------------------------------------------------------
 
-export type EvalMode = "baseline" | "hybrid" | "advanced";
+export type EvalMode = "baseline" | "hybrid" | "advanced" | "advanced_hybrid";
 export type EvalStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
 
 export type EvalDataset = {

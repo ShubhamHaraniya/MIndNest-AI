@@ -105,7 +105,15 @@ def build_router_prompt(agent_lines: str, ctx: AgentContext) -> str:
         current = next((s.name for s in ctx.subjects if s.id == ctx.subject_id), None)
         if current:
             library += f". This chat is focused on the subject {current}."
-    return ROUTER_SYSTEM.format(agents=agent_lines, library=library)
+    prompt = ROUTER_SYSTEM.format(agents=agent_lines, library=library)
+    if ctx.attachment_text.strip():
+        prompt += (
+            "\n\nTHE STUDENT HAS FILES ATTACHED TO THIS CHAT; their text is already given to the agent. "
+            "A question about \"this photo\", \"this file\", \"the attachment\" or what it says is about the "
+            "attachment, not about the library: pick \"study\" for it, never \"materials\" (which only lists "
+            "and opens files in the library), unless the message clearly asks for something else such as a quiz."
+        )
+    return prompt
 
 
 def parse_plan(reply: str, allowed: set[str], default_query: str) -> Plan:

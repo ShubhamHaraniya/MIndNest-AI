@@ -10,7 +10,7 @@ import io
 import json
 import re
 from datetime import UTC, datetime
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Query, Response
@@ -90,10 +90,12 @@ class CasePatch(BaseModel):
 
 class RunIn(BaseModel):
     dataset_id: UUID
-    # One run is created per mode, so baseline / hybrid / advanced can be compared in one click.
-    modes: list[str] = Field(default_factory=lambda: ["advanced"], min_length=1, max_length=3)
+    # One run is created per mode, so all four search methods can be compared in one click.
+    modes: list[str] = Field(default_factory=lambda: ["advanced"], min_length=1, max_length=len(RETRIEVAL_MODES))
     top_k: int | None = Field(default=None, ge=1, le=20)
     candidates: int | None = Field(default=None, ge=5, le=100)
+    # How the word search orders its matches (hybrid mode). None uses RETRIEVAL_KEYWORD_RANKER.
+    keyword_ranker: Literal["ts_rank_cd", "bm25"] | None = None
     # Also write an answer for each question with the student's own key, and optionally judge it.
     generate: bool = False
     judge: bool = False
@@ -518,6 +520,7 @@ async def start_runs(
                 "mode": mode,
                 "top_k": body.top_k or settings.retrieval_top_k,
                 "candidates": body.candidates or settings.retrieval_candidates,
+                "keyword_ranker": body.keyword_ranker or settings.retrieval_keyword_ranker,
                 "generate": body.generate,
                 "judge": body.judge,
                 "provider": provider,

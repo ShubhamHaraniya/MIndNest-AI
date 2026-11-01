@@ -48,8 +48,8 @@ Nothing is shared by default: each student's data is protected **inside the data
 row-level security, not only in application code. Students **bring their own AI key** (Anthropic,
 Google Gemini, OpenAI or Groq), so the platform carries no shared AI bill.
 
-> **Why this project is interesting technically:** three retrieval strategies (vector, hybrid with
-> reciprocal rank fusion, vector + cross-encoder rerank) measured against each other over multilingual text, a LangGraph multi-agent orchestrator with
+> **Why this project is interesting technically:** four retrieval strategies (vector, hybrid with
+> reciprocal rank fusion, vector + cross-encoder rerank, hybrid + rerank) measured against each other over multilingual text, a LangGraph multi-agent orchestrator with
 > human-approval pauses, a defence-in-depth AI-safety layer (PII masking, prompt-injection handling,
 > guardrails), row-level-security multi-tenancy, an Evaluation Lab that measures retrieval and
 > answer quality on the student's own documents, and an agent evaluation harness (53 cases) that
@@ -62,9 +62,9 @@ Measured on real runs (details, limits and how to reproduce them in
 
 | Area | Result |
 | --- | --- |
-| Retrieval, vector only to vector + rerank | Recall@1 **54% to 80%**, Recall@3 89% to 98%, MRR 0.73 to 0.90, Hit@K 100% (26 English questions, one run) |
-| Cost of reranking | Search time about 58 ms to 976 ms median |
-| Hybrid (vector + full text) | Did **not** help: Recall@3 72%, so it is not used in chat |
+| Retrieval, vector only to vector + rerank (what chat uses) | Recall@1 **53% to 76%**, Recall@3 77% to 91%, Recall@10 91% to 95%, MRR 0.68 to 0.86 (168 English questions, 153 answerable, K = 10, one run) |
+| Hybrid search (vector + BM25 keywords) | Recall@1 61%, Recall@10 94%, MRR 0.75: ahead of vector-only; adding the keyword hits to the reranker's candidates gained nothing measurable |
+| Cost | Search time about 48 ms (vector only), 214 ms (hybrid), 542 ms (with rerank) median |
 | Agents, 51 of 53 cases ran | Task success 47 / 51 (92%), routing 31 / 31, 9 / 9 must-block messages blocked, 0 / 12 safe messages wrongly blocked |
 | Guardrails, offline | 16 / 16 cases, median 14 ms |
 
@@ -279,9 +279,10 @@ flowchart LR
     F -.-> PR
 ```
 
-Chat uses the **advanced** strategy above. The Evaluation Lab can compare three strategies on your
-own documents: **baseline** (vector only), **hybrid** (vector + full text merged with reciprocal rank
-fusion, `score = Σ 1 / (60 + rank)`) and **advanced** (vector candidates + cross-encoder rerank).
+Chat uses the **advanced** strategy above. The Evaluation Lab can compare four strategies on your
+own documents: **baseline** (vector only), **hybrid** (vector + BM25 full text merged with reciprocal rank
+fusion, `score = Σ 1 / (60 + rank)`), **advanced** (vector candidates + cross-encoder rerank) and
+**advanced + hybrid** (the merged vector + keyword candidates, then the cross-encoder rerank).
 If the model service is down, chat keeps working with keyword search and says so (`degraded`).
 
 ### One chat message, end to end
@@ -430,7 +431,7 @@ Two harnesses ship with the repo, and `scripts/run-evals.ps1` runs them.
 
 | What | Measures | Needs | Cost |
 | --- | --- | --- | --- |
-| **RAG Lab** (Evaluation Lab page, `/eval`) | Recall@1/3/K, Precision@K, Hit@K, MRR, citation validity and accuracy, AI-judged correctness and faithfulness, p50/p95 latency and tokens, per language, for **baseline**, **hybrid** and **advanced** retrieval | Running stack, model service, an uploaded corpus | Retrieval runs are free; one generation run spends tokens |
+| **RAG Lab** (Evaluation Lab page, `/eval`) | Recall@1/3/5/10/K, Precision@K, Hit@K, MRR, citation validity and accuracy, AI-judged correctness and faithfulness, p50/p95 latency and tokens, per language, for **baseline**, **hybrid**, **advanced** and **advanced + hybrid** retrieval | Running stack, model service, an uploaded corpus | Retrieval runs are free; one generation run spends tokens |
 | **Dataset check** (`evals/verify_dataset.py`) | Every evidence phrase of the 50 questions (26 English, 12 Hindi, 12 Gujarati; multi-fact, cross-lingual, unanswerable and prompt-injection cases) really occurs in the corpus | Python only | Free, offline |
 | **Guardrail evaluation** | The input safety rail on 16 messages: blocked when it should, not blocked when safe, speed | Python only | Free, offline |
 | **Live agent evaluation** | 53 cases through the real app: routing, tool use, task success, citations, latency, tokens (Ragas faithfulness and topic adherence with a judge model) | Running stack, a test account with an AI key | Uses that key |
@@ -454,7 +455,8 @@ Add a judge model so the model-graded scores are filled in:
 
 The RAG comparison runs in the web app because it uses the student's own uploaded files: create a
 subject, upload `evals/corpus` and `evals/corpus/synthetic`, import `evals/datasets/rag_v1.jsonl`
-at `/eval`, run baseline, hybrid and advanced (no generation, free), then advanced with the judge,
+(or the larger `rag_v2.jsonl`: 218 questions, 168 of them English, on the same corpus)
+at `/eval`, run all four search methods (no generation, free), then advanced with the judge,
 and press **Compare runs**. Never compare a run marked *degraded* (model service was down). Full
 details: [evals/README.md](evals/README.md) and
 [docs/runbooks/agent-evaluation.md](docs/runbooks/agent-evaluation.md). Reports land in
@@ -533,53 +535,92 @@ All numbers below come from real runs on the author's machine (Windows, Docker C
 model service on the host). Each is **one run** on a **small set**, so read them as evidence of a
 direction, not as a benchmark.
 
-#### Retrieval (RAG Lab, October 2026)
+#### Retrieval (RAG Lab, November 2026)
 
-Retrieval only (no answer generation), English question set `evals/datasets/rag_v1_en.jsonl`: 26
-questions, 23 of them answerable from the corpus and 3 deliberately unanswerable. Same corpus, same
-model service, same questions for all three modes.
+Retrieval only (no answer generation), English question set `evals/datasets/rag_v2_en.jsonl`: 168
+questions, 153 answerable from the corpus and 15 deliberately unanswerable, spread over seven documents
+(MCP, agent harness, prompt and context engineering, KNN, a multi-step agent deck, English tenses, and the
+150,000-character Qwen3-VL report). All four search methods on the same corpus, model service and
+questions, **K = 10 passages kept** from 30 candidates, one run each. Recall@K is therefore Recall@10.
 
-| Mode | Recall@1 | Recall@3 | Recall@K | Precision@K | Hit@K | MRR | Search time, median | Slowest 5% |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| baseline (vector only) | 54% | 89% | 89% | 21% | 91% | 0.73 | 58 ms | 115 ms |
-| hybrid (vector + full text, RRF) | 54% | 72% | 85% | 18% | 87% | 0.67 | 74 ms | 93 ms |
-| **advanced (vector + rerank)** | **80%** | **98%** | **98%** | 25% | **100%** | **0.90** | 976 ms | 1.3 s |
+| Mode | Recall@1 | Recall@3 | Recall@5 | Recall@10 | Precision@10 | Hit@10 | MRR | Search time, median | Slowest 5% |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| baseline (vector only) | 53% | 77% | 82% | 91% | 11% | 92% | 0.68 | 48 ms | 65 ms |
+| hybrid (vector + BM25 keywords, merged by RRF) | 61% | 83% | 90% | 94% | 12% | 95% | 0.75 | 214 ms | 255 ms |
+| **advanced** (vector candidates, then rerank; chat) | **76%** | **91%** | **93%** | **95%** | 12% | **96%** | **0.86** | 542 ms | 765 ms |
+| advanced + hybrid (vector + BM25 candidates, then rerank) | 77% | 92% | 94% | 97% | 13% | 97% | 0.87 | 649 ms | 864 ms |
 
 What this shows:
 
-- **Reranking is what helped.** Putting the cross-encoder in front of the vector candidates moved the
-  right passage to the top far more often: Recall@1 rose from 54% to 80% (+26 points), Recall@3 from
-  89% to 98% (+9), MRR from 0.73 to 0.90, and Hit@K reached 100%. This is why chat uses *advanced*.
-- **Hybrid search did not help on this corpus.** Merging full-text hits into the vector hits was
-  slightly *worse* than vector alone (Recall@3 72% vs 89%). We did not isolate why (the usual suspects
-  are keyword noise on a small, paraphrase-heavy corpus and the plain `simple` text-search config), so
-  hybrid stays available in the Lab for comparison but is not claimed as an improvement.
-- **It costs time.** Advanced search takes a median of about 1 s against about 60 ms for vector-only,
-  roughly 17 times slower, because the reranker reads every candidate with the question. For a chat
-  turn that already waits seconds for the language model, we accepted that for the accuracy gain.
-- **Precision@K is low by design.** With K = 6 results and only one or two evidence passages per
-  question, even a perfect system cannot exceed about 17-33%, so compare the modes with each other
-  rather than against 100%.
+- **Reranking fixes the order more than it finds new passages.** Vector search already has the right
+  passage somewhere in its top 10 for 91% of questions, but first only 53% of the time. The reranker lifts
+  Recall@1 from 53% to 76% (+23 points) and Recall@3 from 77% to 91%, while Recall@10 moves only 91% to
+  95%. That ordering is why chat reranks: the language model reads the first sources most closely.
+- **Hybrid search helps once the keyword side is ranked properly.** Merging BM25 keyword hits into the
+  vector hits beat vector-only on every score (Recall@1 +8 points, Recall@3 +6, Recall@5 +8, Recall@10 +3,
+  MRR +0.07), and the gap narrows as the list gets longer. It costs about 4.5 times the search time.
+- **Adding keyword candidates to the reranker gained nothing measurable.** Advanced + hybrid is within
+  0.6 to 1.6 points of plain advanced on every score (one question is about 0.65 points, so that is one to
+  three questions) for about 110 ms more per search. Chat therefore keeps the cheaper vector candidates.
+- **A few questions are never found.** Even the best mode misses the evidence in its top 10 for about 3% of
+  answerable questions (four or five). Those cases have not been inspected yet; the cause could be the
+  retriever or the evidence phrase.
+- **Precision@K is low by design.** With 10 results kept and one or two evidence passages per question, even
+  a perfect system cannot exceed about 10-20%, so compare the modes with each other, not with 100%.
+- **Search time grows with the method**: about 50 ms, 200 ms, 540 ms and 650 ms median. For a chat turn that
+  already waits seconds for the language model, the reranker's cost is an accepted trade for accuracy.
 
-Limits of this result: the English set only (Hindi and Gujarati retrieval were **not** measured here;
-the full 50-question set `rag_v1.jsonl` includes them), one run per mode, 23 answerable questions
-(each is worth about 4 points), and answer quality (correctness, faithfulness) was not part of this
-run. Run the Lab again with the judge model for those.
+Earlier runs, kept as history. First, the same 168 questions with **K = 6** (three methods; its last row is the
+advanced + hybrid method, run before the Lab had a mode of its own). Precision, Hit and MRR are measured over
+the passages kept, so they are not comparable with the K = 10 table above:
+
+| Mode | Recall@1 | Recall@3 | Recall@6 | Precision@6 | Hit@6 | MRR |
+| --- | --- | --- | --- | --- | --- | --- |
+| baseline (vector only) | 53% | 77% | 85% | 17% | 86% | 0.67 |
+| hybrid (BM25) | 61% | 83% | 92% | 19% | 93% | 0.75 |
+| advanced + hybrid | 77% | 92% | 96% | 20% | 96% | 0.87 |
+
+Then the first, smaller English set (`rag_v1_en.jsonl`, 26 questions, 23 answerable, K = 6; one question was worth
+about 4 points, which is why it was replaced as the headline):
+
+| Mode | Recall@1 | Recall@3 | Recall@K | Precision@K | Hit@K | MRR |
+| --- | --- | --- | --- | --- | --- | --- |
+| baseline (vector only) | 54% | 89% | 89% | 21% | 91% | 0.73 |
+| hybrid, keyword leg ranked by Postgres `ts_rank_cd` | 54% | 72% | 85% | 18% | 87% | 0.67 |
+| hybrid, keyword leg ranked by BM25 | 59% | 85% | 93% | 23% | 96% | 0.74 |
+| advanced (vector candidates, then rerank) | 80% | 98% | 98% | 25% | 100% | 0.90 |
+
+With Postgres's own keyword ranking, hybrid looked *worse* than vector-only on that small set; the
+larger set shows hybrid with BM25 clearly ahead. Search times vary between runs (advanced took 976 ms,
+499 ms, 628 ms and 542 ms in four runs), so compare times only within one run.
+
+Limits of this result: English questions only for the headline table (a Hindi and Gujarati set exists in
+`rag_v2.jsonl`, but its wording was written by an AI and has not been reviewed by a native speaker, so
+no Hindi or Gujarati figure is quoted); one run per mode; the questions were drafted by Claude against the
+same documents, not collected from real students; and answer quality (correctness, faithfulness) was not
+part of this run. Run the Lab again with the judge model for those.
 
 #### How retrieval was improved
 
 1. **Started with the simplest thing**: embed the question with BGE-M3 and take the nearest chunks by
-   cosine distance (baseline). It finds the right passage in the top 3 about 9 times in 10, but puts it
-   first only about half the time, and the language model reads the first sources most closely.
-2. **Tried keyword + vector fusion** (hybrid, reciprocal rank fusion). It was built because keyword
-   search usually rescues exact names and numbers, but the measurement said it did not help here, so it
-   was not adopted. This is the point of the Lab: a plausible idea was tested and dropped.
-3. **Added a cross-encoder reranker** (advanced): fetch 30 vector candidates, let
-   `bge-reranker-v2-m3` score each against the question, keep the best 6. Measured gain: +26 points of
-   Recall@1, MRR 0.73 to 0.90, no question missed entirely (Hit@K 100%).
-4. **Kept a safety net**: if the model service is down, chat falls back to keyword search and labels the
+   cosine distance (baseline). The right passage is in the top 3 for about 3 questions in 4 (77%) and in the
+   top 10 for 9 in 10 (91%), but it is first only about half the time (53%), and the language model reads
+   the first sources most closely.
+2. **Tried keyword + vector fusion** (hybrid, reciprocal rank fusion). With Postgres's `ts_rank_cd` the
+   measurement on the small set said it did not help (Recall@3 72% against 89%), so it was not adopted.
+   The suspect was the keyword ranking itself, so a real BM25 ranker (idf and length normalisation, common
+   question words left out when picking candidates) was added. On the larger set hybrid with BM25 beat
+   vector-only on every score (Recall@1 53% to 61%, Recall@10 91% to 94%, MRR 0.68 to 0.75). That is the
+   point of the Lab: an idea was tested, dropped, diagnosed and re-tested on evidence. Two things changed at
+   once (BM25 scoring and the common-word filter), so which of them mattered is not isolated.
+3. **Added a cross-encoder reranker** (advanced): fetch 30 vector candidates, let `bge-reranker-v2-m3`
+   score each against the question and keep the best. Measured on the larger set: Recall@1 53% to 76%,
+   Recall@3 77% to 91%, MRR 0.68 to 0.86, Recall@10 91% to 95%.
+4. **Tested keyword candidates for the reranker too** (advanced + hybrid): Recall@1 77% against 76%, Recall@10
+   97% against 95%, for about 110 ms more. That is within noise, so chat keeps the simpler vector candidates.
+5. **Kept a safety net**: if the model service is down, chat falls back to keyword search and labels the
    answer *degraded*; a Lab run made in that state is marked degraded and must not be compared.
-5. **Made the retrieved text safer before it reaches the model**: sources are numbered, neutralised
+6. **Made the retrieved text safer before it reaches the model**: sources are numbered, neutralised
    against prompt injection and PII-masked, and the answer must cite `[n]` numbers that are real
    sources (checked by the server).
 

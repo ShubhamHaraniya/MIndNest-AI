@@ -20,7 +20,7 @@ import { Alert } from "@/components/ui";
 import { useLocale, useT } from "@/i18n/client";
 import { ApiError, api } from "@/lib/api";
 import { errorMessage } from "@/lib/errors";
-import { METRIC_GROUPS, formatMetric, formatMs, isActive } from "@/lib/eval";
+import { K_METRICS, METRIC_GROUPS, formatMetric, formatMs, isActive } from "@/lib/eval";
 import { relativeTime } from "@/lib/format";
 import type { EvalResult, EvalRun } from "@/lib/types";
 
@@ -238,6 +238,7 @@ export function EvalRunView({ runId }: { runId: string }) {
               { label: t("eval.run.dataset"), value: <Link href={`/eval/datasets/${run.dataset_id}`} className="text-brand hover:underline">{run.dataset_name}</Link> },
               { label: t("evx.runPage.method"), value: t(`eval.mode.short.${run.config.mode}`) },
               { label: t("evx.runPage.passages"), value: String(run.config.top_k) },
+              { label: t("evx.runPage.candidates"), value: String(run.config.candidates) },
               { label: t("evx.runPage.answers"), value: t(answersKey) },
               { label: t("evx.runPage.model"), value: run.config.model ?? "–" },
               { label: t("evx.col.started"), value: run.started_at ? relativeTime(run.started_at, locale) : "–" },
@@ -292,6 +293,9 @@ function Scores({ run }: { run: EvalRun }) {
                       <Tr key={metric.key}>
                         <Td>
                           {t(metric.label)}
+                          {K_METRICS.includes(metric.key) ? (
+                            <span className="block text-xs text-muted">{t("evx.k", { k: run.config.top_k })}</span>
+                          ) : null}
                           {metric.lowerIsBetter ? <span className="block text-xs text-muted">{t("eval.lowerIsBetter")}</span> : null}
                         </Td>
                         <Td align="right" className="tabular text-base font-semibold">

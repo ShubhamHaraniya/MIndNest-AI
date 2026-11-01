@@ -103,26 +103,36 @@ def relevance_flags(passages: Sequence[PassageView], evidence: Sequence[Evidence
 # ---------------------------------------------------------------------------- retrieval
 
 
-def retrieval_scores(passages: Sequence[PassageView], evidence: Sequence[Evidence]) -> dict[str, float]:
-    """Recall@1/3/K, precision@K, hit@K and MRR for one answerable question.
+def retrieval_scores(
+    passages: Sequence[PassageView], evidence: Sequence[Evidence], k: int | None = None
+) -> dict[str, float]:
+    """Recall@1/3/5/10/K, precision@K, hit@K and MRR for one answerable question.
+
+    `passages` is the ranked list the search returned, which may be deeper than K: Recall@1, @3, @5
+    and @10 look at that many passages from the top (fewer if the search returned fewer), while
+    Recall@K, Precision@K, Hit@K and MRR use only the first K (all of them when `k` is None), the
+    passages the answer would actually be written from.
 
     Recall counts evidence items, not passages: a question that needs two facts is only fully
-    recalled when both appear in the top K.
+    recalled when both appear in the top N.
     """
     if not evidence:
         return {}
 
-    def covered(k: int) -> float:
-        top = passages[:k]
+    def covered(n: int) -> float:
+        top = passages[:n]
         found = sum(1 for e in evidence if any(matches_evidence(p, e) for p in top))
         return found / len(evidence)
 
-    flags = relevance_flags(passages, evidence)
+    kept = list(passages[:k]) if k is not None else list(passages)
+    flags = relevance_flags(kept, evidence)
     first = next((i for i, hit in enumerate(flags, start=1) if hit), None)
-    count = len(passages)
+    count = len(kept)
     return {
         "recall_at_1": covered(1),
         "recall_at_3": covered(3),
+        "recall_at_5": covered(5),
+        "recall_at_10": covered(10),
         "recall_at_k": covered(count) if count else 0.0,
         "precision_at_k": (sum(flags) / count) if count else 0.0,
         "hit_at_k": 1.0 if first is not None else 0.0,
@@ -227,7 +237,8 @@ def parse_judge(reply: str) -> dict[str, Any] | None:
 # ---------------------------------------------------------------------------- summaries
 
 METRICS = (
-    "recall_at_1", "recall_at_3", "recall_at_k", "precision_at_k", "hit_at_k", "mrr",
+    "recall_at_1", "recall_at_3", "recall_at_5", "recall_at_10", "recall_at_k",
+    "precision_at_k", "hit_at_k", "mrr",
     "correctness", "faithfulness", "relevance",
     "cited_any", "citation_validity", "citation_accuracy",
     "abstain", "false_refusal", "injection_leaked",

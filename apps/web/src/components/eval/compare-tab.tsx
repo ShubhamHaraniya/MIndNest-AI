@@ -79,6 +79,7 @@ export function CompareTab({
               <span className="max-w-[12rem] truncate text-[12px] font-medium text-ink" title={name(run)}>
                 {name(run)}
               </span>
+              <span className="whitespace-nowrap text-xs font-normal text-muted">{t("evx.k", { k: run.config.top_k })}</span>
             </span>
           </Th>
         ))}

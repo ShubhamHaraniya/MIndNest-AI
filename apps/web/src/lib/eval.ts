@@ -2,7 +2,10 @@ import type { MessageKey } from "@/i18n/translate";
 
 import type { EvalMode, EvalRun, EvalStatus } from "./types";
 
-export const MODES: EvalMode[] = ["baseline", "hybrid", "advanced"];
+export const MODES: EvalMode[] = ["baseline", "hybrid", "advanced", "advanced_hybrid"];
+
+/** Scores measured on the first K passages of a run (K is set per run), as opposed to Recall@1/3/5/10. */
+export const K_METRICS = ["recall_at_k", "precision_at_k", "hit_at_k", "mrr"];
 
 export type MetricDef = { key: string; label: MessageKey; about: MessageKey; lowerIsBetter?: boolean };
 export type MetricGroup = { title: MessageKey; metrics: MetricDef[] };
@@ -13,6 +16,8 @@ export const METRIC_GROUPS: MetricGroup[] = [
     metrics: [
       { key: "recall_at_1", label: "eval.metric.recall_at_1", about: "evx.about.recall_at_1" },
       { key: "recall_at_3", label: "eval.metric.recall_at_3", about: "evx.about.recall_at_3" },
+      { key: "recall_at_5", label: "eval.metric.recall_at_5", about: "evx.about.recall_at_5" },
+      { key: "recall_at_10", label: "eval.metric.recall_at_10", about: "evx.about.recall_at_10" },
       { key: "recall_at_k", label: "eval.metric.recall_at_k", about: "evx.about.recall_at_k" },
       { key: "precision_at_k", label: "eval.metric.precision_at_k", about: "evx.about.precision_at_k" },
       { key: "hit_at_k", label: "eval.metric.hit_at_k", about: "evx.about.hit_at_k" },

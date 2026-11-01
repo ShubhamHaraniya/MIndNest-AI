@@ -5,7 +5,7 @@ every evidence phrase is found inside one passage of the named file. Run it befo
 dataset, and again whenever a document or question changes. It needs no database, key or model.
 
     python evals/verify_dataset.py
-    python evals/verify_dataset.py --dataset evals/datasets/rag_v1.jsonl --corpus evals/corpus
+    python evals/verify_dataset.py --dataset evals/datasets/rag_v2.jsonl --corpus evals/corpus
 
 Run it with the same Python environment as the worker (it uses the worker's own parser).
 """
@@ -53,7 +53,7 @@ def load_passages(corpus: Path, max_chars: int, overlap: int) -> tuple[list[Pass
 def main() -> int:
     root = Path(__file__).resolve().parent
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("--dataset", type=Path, default=root / "datasets" / "rag_v1.jsonl")
+    parser.add_argument("--dataset", type=Path, default=root / "datasets" / "rag_v2.jsonl")
     parser.add_argument("--corpus", type=Path, default=root / "corpus")
     args = parser.parse_args()
 

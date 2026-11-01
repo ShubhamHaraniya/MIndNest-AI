@@ -20,7 +20,13 @@ from uuid import UUID
 
 from mindnest_api.llm import LLM, PROVIDERS, ChatMessage, LLMError
 from mindnest_api.prompts import build_system_prompt, format_sources
-from mindnest_api.retrieval import RETRIEVAL_MODES, ModelClient, RetrievalMode, retrieve
+from mindnest_api.retrieval import (
+    KEYWORD_RANKERS,
+    RETRIEVAL_MODES,
+    ModelClient,
+    RetrievalMode,
+    retrieve,
+)
 from mindnest_api.vault import decrypt
 from mindnest_core.db import as_json, user_session
 from mindnest_core.evaldata import canary_of
@@ -50,6 +56,8 @@ type Sleep = Callable[[float], Awaitable[None]]
 # Waits before retrying a rate-limited provider call (free tiers allow few requests a minute).
 RATE_LIMIT_BACKOFF = (15.0, 45.0, 90.0)
 RETRIEVED_TEXT_CHARS = 1500  # a whole passage (they are about 800 characters or fewer)
+# Every run searches at least this deep, so Recall@10 exists even when K is 6.
+RECALL_DEPTH = 10
 
 
 class RunFailed(Exception):
@@ -71,6 +79,8 @@ class RunConfig:
     model: str | None
     judge_model: str | None
     delay_seconds: float
+    # How the word-search side orders its matches; only hybrid (and the no-embedding fallback) uses it.
+    keyword_ranker: str = "ts_rank_cd"
 
     @classmethod
     def from_json(cls, raw: dict[str, Any], settings: Settings) -> "RunConfig":
@@ -85,6 +95,11 @@ class RunConfig:
             model=raw.get("model"),
             judge_model=raw.get("judge_model") or raw.get("model"),
             delay_seconds=float(raw.get("delay_seconds") or 0),
+            keyword_ranker=(
+                raw["keyword_ranker"]
+                if raw.get("keyword_ranker") in KEYWORD_RANKERS
+                else settings.retrieval_keyword_ranker
+            ),
         )
 
 
@@ -141,31 +156,39 @@ async def _evaluate_case(ctx: _Context, case: dict[str, Any]) -> dict[str, Any]:
     answer: str | None = None
     error: str | None = None
 
+    # Search at least RECALL_DEPTH passages deep so Recall@5 and Recall@10 can be scored; only the
+    # first K (cfg.top_k) are shown, scored as Recall@K / Precision@K / Hit@K / MRR and used to write
+    # an answer.
+    depth = max(cfg.top_k, RECALL_DEPTH)
     started = time.perf_counter()
     async with user_session(ctx.factory, ctx.owner_id) as session:
         found = await retrieve(
             session, ctx.models, question,
-            subject_id=ctx.subject_id, candidates=cfg.candidates, top_k=cfg.top_k, mode=cfg.mode,
+            subject_id=ctx.subject_id, candidates=max(cfg.candidates, depth), top_k=depth, mode=cfg.mode,
+            keyword_ranker=cfg.keyword_ranker,
+            # In the Lab "advanced" always means vector candidates; the setting only steers chat.
+            advanced_candidates="vector" if cfg.mode == "advanced" else None,
         )
     timings["retrieval_ms"] = round((time.perf_counter() - started) * 1000, 1)
     if found.degraded:
         timings["degraded"] = 1
 
+    kept = found.passages[: cfg.top_k]
     views = [PassageView(p.filename, p.text, p.page) for p in found.passages]
-    flags = relevance_flags(views, evidence)
+    flags = relevance_flags(views[: cfg.top_k], evidence)
     if answerable:
-        scores.update(retrieval_scores(views, evidence))
+        scores.update(retrieval_scores(views, evidence, k=cfg.top_k))
     retrieved = [
         {
             "n": n, "filename": p.filename, "page": p.page, "score": round(p.score, 4),
             "relevant": flags[n - 1], "text": p.text[:RETRIEVED_TEXT_CHARS],
         }
-        for n, p in enumerate(found.passages, start=1)
+        for n, p in enumerate(kept, start=1)
     ]
 
     if cfg.generate:
         model = cfg.model or PROVIDERS[cfg.provider or ""].default_model
-        system = build_system_prompt(found.passages, case["language"])
+        system = build_system_prompt(kept, case["language"])
         try:
             answer, first_s, total_s = await _collect(ctx, model, system, [ChatMessage("user", question)])
             timings.update(
@@ -184,7 +207,7 @@ async def _evaluate_case(ctx: _Context, case: dict[str, Any]) -> dict[str, Any]:
             if cfg.judge:
                 prompt = judge_prompt(
                     question, case["reference_answer"], answerable,
-                    format_sources(found.passages), answer,
+                    format_sources(kept), answer,
                 )
                 judged, _, judge_s = await _collect(
                     ctx, cfg.judge_model or model, JUDGE_SYSTEM, [ChatMessage("user", prompt)]

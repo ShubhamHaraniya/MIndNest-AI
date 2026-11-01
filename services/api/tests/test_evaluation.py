@@ -182,8 +182,9 @@ def test_answers_need_a_key_and_judging_needs_answers(make_user, ingest):  # typ
 def test_search_modes_can_be_compared_without_any_key(make_user, ingest, queue, evaluate):  # type: ignore[no-untyped-def]
     user = make_user()
     dataset = import_dataset(user, corpus(user, ingest))
-    runs = start(user, dataset["id"], queue, modes=["baseline", "hybrid", "advanced"], label="compare")
-    assert [r["config"]["mode"] for r in runs] == ["baseline", "hybrid", "advanced"]
+    modes = ["baseline", "hybrid", "advanced", "advanced_hybrid"]
+    runs = start(user, dataset["id"], queue, modes=modes, label="compare")
+    assert [r["config"]["mode"] for r in runs] == modes
     assert all(r["status"] == "queued" and r["total"] == 4 for r in runs)
     assert {(r["id"], user.id) for r in runs} <= set(queue.eval_jobs)
 
@@ -192,7 +193,7 @@ def test_search_modes_can_be_compared_without_any_key(make_user, ingest, queue, 
         assert run["status"] == "completed" and run["done"] == run["total"] == 4
         assert run["finished_at"] and run["started_at"]
         metrics = run["summary"]["metrics"]
-        assert {"recall_at_1", "recall_at_k", "mrr", "precision_at_k"} <= set(metrics)
+        assert {"recall_at_1", "recall_at_5", "recall_at_10", "recall_at_k", "mrr", "precision_at_k"} <= set(metrics)
         assert "correctness" not in metrics  # nothing was answered, so nothing was judged
         assert run["summary"]["answerable"] == 2 and run["summary"]["unanswerable"] == 2
         assert run["summary"]["degraded"] == 0
@@ -207,7 +208,7 @@ def test_search_modes_can_be_compared_without_any_key(make_user, ingest, queue, 
     assert results["en-01"]["answer"] is None
 
     listed = user.get(f"/eval/runs?dataset_id={dataset['id']}").json()
-    assert len(listed) == 3 and listed[0]["dataset_name"] == "rag"
+    assert len(listed) == 4 and listed[0]["dataset_name"] == "rag"
 
 
 def test_answers_are_generated_cited_and_judged(make_user, ingest, queue, evaluate, llm):  # type: ignore[no-untyped-def]

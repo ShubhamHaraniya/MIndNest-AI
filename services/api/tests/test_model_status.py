@@ -67,7 +67,7 @@ def test_the_screen_shows_what_the_service_reports(make_user, use_models):  # ty
     assert body["reranker"] == {"name": "BAAI/bge-reranker-v2-m3", "loaded": False, "device": None}
     assert body["dim"] == 1024 and body["dim_matches"] is (get_settings().embedding_dim == 1024)
     assert body["gpu_name"] == "Laptop GPU" and body["precision"] == "fp16"
-    assert body["modes"] == ["baseline", "hybrid", "advanced"]
+    assert body["modes"] == ["baseline", "hybrid", "advanced", "advanced_hybrid"]
     assert body["latency_ms"] is not None
 
 

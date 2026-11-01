@@ -32,6 +32,8 @@ export function RunDialog({
   const [generate, setGenerate] = useState(false);
   const [judge, setJudge] = useState(false);
   const [label, setLabel] = useState("");
+  const [topK, setTopK] = useState("");
+  const [candidates, setCandidates] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -42,6 +44,8 @@ export function RunDialog({
     setGenerate(false);
     setJudge(false);
     setLabel("");
+    setTopK("");
+    setCandidates("");
     setMessage(null);
     setBusy(false);
     // Only when the dialog opens: later reloads of the list must not reset what was typed.
@@ -70,6 +74,8 @@ export function RunDialog({
           generate,
           judge: generate && judge,
           label: label.trim() || null,
+          top_k: topK.trim() ? Number(topK) : null,
+          candidates: candidates.trim() ? Number(candidates) : null,
         },
       });
       onStarted(started.length);
@@ -95,6 +101,33 @@ export function RunDialog({
         <FormRow label={t("eval.run.label")} htmlFor="run-label" hint={t("evx.run.labelHint")}>
           <Input id="run-label" value={label} maxLength={80} onChange={(event) => setLabel(event.target.value)} />
         </FormRow>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <FormRow label={t("evx.run.topK")} htmlFor="run-top-k" hint={t("evx.run.topKHint")}>
+            <Input
+              id="run-top-k"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={20}
+              placeholder="6"
+              value={topK}
+              onChange={(event) => setTopK(event.target.value)}
+            />
+          </FormRow>
+          <FormRow label={t("evx.run.candidates")} htmlFor="run-candidates" hint={t("evx.run.candidatesHint")}>
+            <Input
+              id="run-candidates"
+              type="number"
+              inputMode="numeric"
+              min={5}
+              max={100}
+              placeholder="30"
+              value={candidates}
+              onChange={(event) => setCandidates(event.target.value)}
+            />
+          </FormRow>
+        </div>
 
         <fieldset>
           <legend className="mb-1 text-[13px] font-medium">{t("eval.run.modes")}</legend>

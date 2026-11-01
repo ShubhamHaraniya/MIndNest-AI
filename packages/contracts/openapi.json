@@ -10686,6 +10686,21 @@
             "title": "Judge",
             "type": "boolean"
           },
+          "keyword_ranker": {
+            "anyOf": [
+              {
+                "enum": [
+                  "ts_rank_cd",
+                  "bm25"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keyword Ranker"
+          },
           "label": {
             "anyOf": [
               {
@@ -10713,7 +10728,7 @@
             "items": {
               "type": "string"
             },
-            "maxItems": 3,
+            "maxItems": 4,
             "minItems": 1,
             "title": "Modes",
             "type": "array"

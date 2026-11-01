@@ -20,17 +20,45 @@ Each answerable case lists **evidence**: an exact phrase from a document. A retr
 counts as relevant when it contains that phrase (ignoring case, spacing and punctuation).
 That is how Recall@K, MRR and citation accuracy are computed without a human judging each one.
 
+## The larger dataset: `datasets/rag_v2.jsonl`
+
+218 questions on the same corpus (no new documents needed): the 50 questions of `rag_v1` plus 168 new ones,
+so earlier results stay comparable. `datasets/rag_v2_en.jsonl` is the English-only part (168 questions,
+153 answerable) and is the one to quote numbers from until a native speaker has reviewed the Hindi and
+Gujarati wording.
+
+| Part | Questions |
+|---|---|
+| English | 168 (153 answerable, 15 unanswerable) |
+| Hindi | 25 (23 answerable, 2 unanswerable) |
+| Gujarati | 25 (23 answerable, 2 unanswerable) |
+
+The new English questions are spread over all seven PDFs, including the long Qwen3-VL report (a
+150,000-character distractor-heavy document) and the 90,000-character prompt/context engineering reference.
+They were drafted by Claude with a deliberate mix so the set favours neither keyword search nor
+embeddings: about 40% paraphrased questions that share few words with the answer, about 30% direct fact,
+number or exact-name lookups, about 15% short vague questions, and about 15% needing two passages.
+Twenty-four new Hindi and Gujarati questions are cross-lingual (asked in Hindi or Gujarati, answered by
+English text). Every evidence phrase was checked with `verify_dataset.py` (all found inside one passage).
+The Hindi and Gujarati wording is AI-written and needs native review.
+
+Import it the same way as `rag_v1` (step 3 below), and compare modes on the same run settings. The Lab
+now offers four search methods (baseline, hybrid, advanced, advanced + hybrid) and scores Recall@1, @3,
+@5, @10 and @K; set K and the number of candidates in the run dialog.
+Per question, one answerable case is now worth about 0.65 points of Recall, instead of about 4.
+
 ## Running the first evaluation
 
 1. Rebuild and restart api, worker and web (migration `0004` creates the evaluation tables).
 2. Make a subject (for example "Eval corpus") and upload every file in `corpus/`
    (the seven PDFs and the five files in `corpus/synthetic/`). Wait until all show Ready.
-3. Open **Evaluation Lab**, import `datasets/rag_v1.jsonl` and pick that subject.
+3. Open **Evaluation Lab**, import `datasets/rag_v2_en.jsonl` (or `rag_v1.jsonl` for the small set) and pick that subject.
 4. Press **Check against my materials**. Every answerable case should show its evidence as found.
    If some are missing, a document did not finish processing or was uploaded under another name.
 5. Start runs. Good first set:
-   - `baseline`, `hybrid` and `advanced` search, **no generation** (free, no key needed). Compare
-     Recall@K and MRR to see what keyword search and reranking each add.
+   - All four search methods (`baseline`, `hybrid`, `advanced`, `advanced + hybrid`), **no generation**
+     (free, no key needed). Compare Recall@1/3/5/10 and MRR to see what keyword search and reranking each
+     add. Set K in the run dialog (10 gives Recall@K = Recall@10).
    - `advanced` with **generate + judge** (needs a saved provider key) for answer quality,
      faithfulness, citation accuracy, latency and tokens. Use a delay of a few seconds on free tiers.
 6. Open two runs and press **Compare** to see the differences per metric and per language.

@@ -56,6 +56,12 @@ class Settings(BaseSettings):
     # Chat (M3).
     retrieval_candidates: int = 30
     retrieval_top_k: int = 6
+    # How the word-search side of retrieval orders its matches: "bm25" (see mindnest_core/bm25.py;
+    # measured better in the Lab) or "ts_rank_cd" (Postgres's own cover-density rank).
+    retrieval_keyword_ranker: str = "bm25"
+    # What advanced mode (the chat default) reranks: "vector" (the vector top N, the original
+    # behaviour) or "hybrid" (the vector top N merged with the keyword top N).
+    retrieval_advanced_candidates: str = "vector"
     chat_history_messages: int = 12
     chat_rate_per_minute: int = 20
     llm_timeout_seconds: float = 120.0
